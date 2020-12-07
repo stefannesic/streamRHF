@@ -1,10 +1,7 @@
-import scipy.io as sio
-import scipy.stats as sstats
-import random 
-import numpy as np
+from my_imports import np, sstats 
 
 # sum of log(Kurtosis(X[a] + 1)) of attributes 0 to d inclusive
-cdef float kurtosis_sum2(float[:,:] X, Py_ssize_t d):
+def kurtosis_sum(float[:,:] X, Py_ssize_t d):
 	cdef float sum = 0.0
 	
 	# loop over the transpose matrix in order to analyze by column
