@@ -1,7 +1,7 @@
 from my_imports import fi
 from libc.math cimport log
 
-cpdef float anomaly_score(rhf, int n, int[:] x):
+cpdef anomaly_score(rhf, int n, float[:] x):
     cdef float sum = 0.0
     cdef int leaf_size
     cdef float p
