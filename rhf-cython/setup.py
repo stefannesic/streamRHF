@@ -10,9 +10,10 @@ ext_modules=[
 	Extension("rht", ["rht.pyx"]),
 	Extension("rhf", ["rhf.pyx"]),
 	Extension("Node", ["Node.pyx"]),
-	Extension("Leaf", ["Leaf.pyx"])
+	Extension("Leaf", ["Leaf.pyx"]),
+        Extension("test", ["test.pyx"])
 ]
 
 setup(
-    ext_modules = cythonize(ext_modules, annotate=True, compiler_directives={'language_level' : "3"})
+    ext_modules = cythonize(ext_modules, gdb_debug=True, annotate=True, compiler_directives={'language_level' : "3"})
 )
