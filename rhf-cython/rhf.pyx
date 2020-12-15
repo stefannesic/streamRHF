@@ -7,6 +7,7 @@ cpdef rhf(X, int t, int nd, int h):
 
     # append t random histogram trees
     for i in range(t):
+        print("i=", i)
         rhf[i] = rht.rht(X, nd, h)
 
     return rhf

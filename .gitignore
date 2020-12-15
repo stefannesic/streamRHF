@@ -6,3 +6,5 @@ build/
 *.swo
 *.so
 */__pycache__/
+*/cython_debug/
+*.swp
