@@ -15,5 +15,5 @@ cpdef find_instance(rht, x):
         # leaf
         data = np.asarray(rht.data)
         if x in data:
-            return rht
+            return rht.data.size
 
