@@ -7,7 +7,7 @@ cpdef rht(X, int nd, int h):
     # unique instances
     X_unique = np.unique(np.asarray(X), axis=0)
     # last condition checks if all instances are the same --> split not possible
-    if nd >= h or X.shape[0] == 1 or X_unique.shape[0] == 1:
+    if nd >= h or X_unique.shape[0] == 1:
         # returns instances without duplicates
         return Leaf.Leaf(X_unique)
     else:
