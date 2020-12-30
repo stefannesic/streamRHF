@@ -10,7 +10,8 @@ ext_modules=[
 	Extension("rht", ["rht.pyx"]),
 	Extension("rhf", ["rhf.pyx"]),
 	Extension("Node", ["Node.pyx"]),
-	Extension("Leaf", ["Leaf.pyx"])
+	Extension("Leaf", ["Leaf.pyx"]),
+    Extension("online_kurtosis", ["online_kurtosis.pyx"])
 ]
 
 setup(
