@@ -7,7 +7,7 @@ cpdef get_attribute(float[:,:] X, float r):
     cdef float[:] a_col
     cdef float a_val, a_min, a_max
     for a in range(0,end):
-        if ks_cy.kurtosis_sum(X, a) > r:
+        if ks_cy.kurtosis_sum(X, a)[0] > r:
             a_col = X[:, a]
 
             # ensures that the split will be proper (no split on extremes)
