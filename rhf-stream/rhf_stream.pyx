@@ -7,14 +7,16 @@ def rhf_stream(data):
     base = np.empty([N])
     rht = None
 
-    // simulating real-time 
-    // construct initial tree with batch algorithm on the first N points
+    # simulating real-time 
+    # construct initial tree with batch algorithm on the first N points
     for i in range(0, N):
         base[i] = data[i]
 
     Node.Node.H = H
     tree = rht.rht(base, t=T)
 
-    // update existing tree
+    # update existing tree
     for i in range(100, data.shape[0]):
-        ins.insert(tree, data[i])
+        tree = ins.insert(tree, np.array([data[i]], np.float32))
+
+    return tree
