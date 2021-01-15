@@ -9,4 +9,6 @@ def kurtosis_sum(float[:,:] X, Py_ssize_t d):
         if (np.max(X[:,a]) != np.min(X[:,a])):
             kurt[a] = np.log(sstats.stats.kurtosis(X[:,a], fisher=False) + 1)
             sum += kurt[a]
+        else:
+            kurt[a] = 0
     return sum, kurt
