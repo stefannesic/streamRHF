@@ -27,8 +27,9 @@ class Node:
     # insert data in leaf
     def insertData(self, x):
         # if the instance isn't already in the leaf
-        if not np.any(np.all(np.isin(x,self.data,True), axis=1)):
+        if not any(np.array_equal(x[0],j) for j in self.data):
             self.data = np.append(self.data, x, axis=0)
+            #print("self.data=", self.data)
         
     # prints the data and splitting information in order of left branch, parent node, right branch
     def printNode(self, int level):
