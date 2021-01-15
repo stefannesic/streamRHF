@@ -9,7 +9,7 @@ def rht(X, int nd):
     # unique instances
     X_unique = np.unique(np.asarray(X), axis=0)
     # last condition checks if all instances are the same --> Leaf
-    if nd >= Node.Node.H or X_unique.shape[0] == 1:
+    if nd >= Node.H or X_unique.shape[0] == 1:
         # returns instances without duplicates
         return Node.Node(nd=nd, data=X_unique)
     else:
