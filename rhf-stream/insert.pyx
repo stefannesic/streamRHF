@@ -12,26 +12,28 @@ def insert(root, x):
         # calculate new kurtosis and sum with new data point
         root.data = np.append(root.data, x, axis=0) 
         new_ks, new_k = ks_cy.kurtosis_sum(root.data, root.data.shape[1]-1)
-        
-        for a in range(root.data.shape[1]):
-            # the previously stored probability of splitting on a 
-            old_p = root.old_k[a] / root.old_ks
-            # the current probability
-            new_p = new_k[a] / new_ks
-            delta_p = new_p - old_p
-
-            if abs(delta_p) >= 1 - rht.eps:
-                #print("in if delta_p")
-                if ((root.attribute != a and delta_p > 0) or (root.attribute == a and delta_p < 0)):                       
-                    # node is replaced by a new tree 
-                    #print("a=", a)
-                    #print("old_p=", old_p)
-                    #print("new_p=", new_p)
-                    print("delta_p=", delta_p)
-                    #print("nd=", root.nd)
-                    #print("new subtree, root.data=", root.data)
-                    return rht.rht(root.data, root.nd) 
-                        
+    
+        # the previously stored probability of splitting on a 
+        old_p = np.asarray(root.old_k) / root.old_ks
+        # the current probability
+        new_p = np.asarray(new_k) / new_ks
+        delta_p = new_p - old_p 
+       
+        for a in np.where(abs(delta_p) >= 1 - rht.eps)[0]:
+            #print("in if delta_p")
+            if ((root.attribute != a and delta_p[a] > 0) or (root.attribute == a and delta_p[a] < 0)):                       
+                # node is replaced by a new tree 
+                #print("a=", a)
+                #print("old_p=", old_p)
+                #print("new_p=", new_p)
+                #print("delta_p=", delta_p[a])
+                #print("nd=", root.nd)
+                #print("new subtree, root.data=", root.data)
+                return rht.rht(root.data, root.nd) 
+                
+        #for a in range(root.data.shape[1]):
+        #    if abs(delta_p[a]) >= 1 - rht.eps:
+                       
             
         # ----- insertion ------- 
 
@@ -51,13 +53,14 @@ def insert(root, x):
         if child.left == None:
             #print("child is leaf")
             # leaf is at max depth
-            if child.nd == Node.Node.H:
+            if child.nd == Node.H:
                 child.insertData(x)
                 #print("1)child.data(after ins)=", child.data)
                 root.replace(child, left)
             else:
                 # leaf depth is not max, so new split
-                print("2)")
+                #print("2) child.nd=", child.nd)
+                #print("H=", Node.H)
                 root.replace(rht.rht(np.append(child.data, x, axis=0), child.nd), left)
                 
         else:
