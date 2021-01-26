@@ -9,13 +9,12 @@ def rht_stream(data, N):
     for i in range(0, N):
         base[i] = data[i]
 
-    tree = rht.rht(base, 0)
+    tree = rht.rht(base, 0, np.zeros([data.shape[1], 5], dtype=np.float32))
 
     t0 = time.time()
     # update existing tree
     for i in range(N, data.shape[0]):
-        #print("i=", i)
-        #print("data(i)=", data[i])
+        print("i=", i)
         tree = ins.insert(tree, np.array([data[i]], np.float32))
     t1 = time.time()
 

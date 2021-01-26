@@ -4,15 +4,18 @@ class Node:
     # max height static definition
     H = 0
     N = 0
-    def __init__(self, float value = -1, int attribute = -1, left = None, right = None, nd=0, data = None, old_ks = 0, old_k = None):
+    def __init__(self, float value = -1, int attribute = -1, left = None, right = None, nd=0, data = None, moments = None, old_ks = 0, old_k = None):
         self.value = value
         self.attribute = attribute
         self.left = left
         self.right = right
         self.nd = nd
         self.data = data
+        
+        # used for incr kurtosis
+        self.moments = moments
 
-        # used for streaming 
+        # used for insertion 
         self.old_ks = old_ks
         self.old_k = old_k
 

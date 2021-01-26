@@ -7,8 +7,9 @@ cpdef rhf(X, int t, int h):
     # create an empty forest
     rhf = np.empty([t], dtype=object)
 
+    cdef float[:,:] moments = np.zeros([X.shape[1], 5], dtype=np.float32)
     # append t random histogram trees
     for i in range(t):
-        rhf[i] = rht.rht(X, 0)
+        rhf[i] = rht.rht(X, 0, moments)
 
     return rhf
