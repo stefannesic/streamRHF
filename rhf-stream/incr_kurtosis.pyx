@@ -1,5 +1,6 @@
 from my_imports import np
-def incr_kurtosis(data, moments):
+cpdef incr_kurtosis(float[:] data, float[:] moments):
+    cdef float mean, M2, M3, M4, n, delta, delta_n, delta_n2, term1, n1, kurtosis 
     # check if calculating from scratch
     if moments[4] != 0:
         mean = moments[0]
@@ -9,7 +10,7 @@ def incr_kurtosis(data, moments):
         n = moments[4]
     else:   
         n, mean, M2, M3, M4 = (0, 0, 0, 0, 0)
-        moments = np.empty([5])
+        moments = np.empty([5], dtype=np.float32)
 
     for x in data:
         n1 = n
