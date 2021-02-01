@@ -11,15 +11,21 @@ cpdef get_attribute(float[:,:] X, float[:] kurt, float r):
    
     # the attribute is found in the bins of the cumulative sum of kurtoses 
     a = np.digitize(r, kurt) 
-    a_col = X[:, a]
+    
+    try:
+        a_col = X[:, a]
+    except:   
+        print("ga, r=", r)
+        print("ga, kurt=", np.asarray(kurt))
+        print("ga, a=", a)
 
+    
     # ensures that the split will be proper (no split on extremes)
     a_min = np.amin(a_col)
     a_max = np.amax(a_col)
     a_val = a_min
 
-    if a_val != a_max:
-        while a_val == a_min or a_val == a_max:
-            a_val = random.uniform(a_min, a_max)
-    
+    while a_val == a_min or a_val == a_max:
+        a_val = random.uniform(a_min, a_max)
+        #print("ga, a_val=", a_val) 
         return a, a_col, a_val

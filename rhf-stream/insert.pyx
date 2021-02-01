@@ -26,12 +26,7 @@ def insert(root, x):
             #print("in if delta_p")
             if ((root.attribute != a and delta_p[a] > 0) or (root.attribute == a and delta_p[a] < 0)):                       
                 # node is replaced by a new tree 
-                #print("a=", a)
-                #print("old_p=", old_p)
-                #print("new_p=", new_p)
-                #print("delta_p=", delta_p[a])
                 print("nd=", root.nd)
-                #print("new subtree, root.data=", root.data)
                 return rht.rht(root.data, root.nd, moments0) 
                 
         # ----- insertion ------- 
@@ -50,16 +45,13 @@ def insert(root, x):
         
         # child is leaf  
         if child.left == None:
-            #print("child is leaf")
             # leaf is at max depth
             if child.nd == Node.H:
                 child.insertData(x)
-                #print("1)child.data(after ins)=", child.data)
                 root.replace(child, left)
             else:
                 # leaf depth is not max, so new split
                 print("2) child.nd=", child.nd)
-                #print("H=", Node.H)
                 root.replace(rht.rht(np.append(child.data, x, axis=0), child.nd, moments0), left)
                 
         else:

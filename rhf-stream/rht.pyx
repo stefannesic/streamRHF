@@ -9,20 +9,25 @@ def rht(X, int nd, float[:,:] moments):
     cdef float[:] kurt
 
     # last condition checks if all instances are the same --> Leaf
-    if nd >= Node.H or np.all(X[0] == X):
+    if nd >= Node.H or X.shape[0] == 1:
         # unique instances
-        X_unique = np.unique(np.asarray(X), axis=0)
+        #X_unique = np.unique(np.asarray(X), axis=0)
         # returns instances without duplicates
 
         # if leaf is at max depth no use in storing moments
-        if nd >= Node.H:
-            return Node.Node(nd=nd, data=X_unique)
-        else:
-            return Node.Node(nd=nd, data=X_unique, moments=moments)
+        return Node.Node(nd=nd, data=np.asarray(X))
     else:
         # attribute selected according to kurtosis
-        ks, kurt, moments = ks_cy.kurtosis_sum(X, X.shape[1]-1, moments)
-        
+        ks, kurt, moments_after = ks_cy.kurtosis_sum(X, X.shape[1]-1, moments)
+      
+        # if all instances are the same 
+        if ks == 0:
+            print("in ks=0") 
+            return Node.Node(nd=nd, data=np.asarray(X), moments=moments)
+
+        # only update the moments if not leaf
+        moments = moments_after
+ 
         # ks may not be included depending on rounding
         r = random.uniform(0, ks)
         a, a_col, a_val = ga.get_attribute(X, kurt, r)
