@@ -18,11 +18,11 @@ def rht(X, int nd, float[:,:] moments):
         return Node.Node(nd=nd, data=np.asarray(X))
     else:
         # attribute selected according to kurtosis
-        ks, kurt, moments_after = ks_cy.kurtosis_sum(X, X.shape[1]-1, moments)
+        X_values = Node.data_complete[X]
+        ks, kurt, moments_after = ks_cy.kurtosis_sum(X_values, moments)
       
         # if all instances are the same 
         if ks == 0:
-            print("in ks=0") 
             return Node.Node(nd=nd, data=np.asarray(X), moments=moments)
 
         # only update the moments if not leaf
@@ -37,11 +37,10 @@ def rht(X, int nd, float[:,:] moments):
         #print("a=", a)
         #print("a_val=", a_val)
         
-        
-        Xl = X[X[:, a] < a_val]
-        Xr = X[X[:, a] >= a_val]
+        Xl = X[X_values[:, a] < a_val]
+        Xr = X[X_values[:, a] >= a_val]
 
-        moments0 = np.zeros([X.shape[1], 5], dtype=np.float32)
+        moments0 = np.zeros([X_values.shape[1], 5], dtype=np.float32)
         
         # moments are stored in Node but not passed in next calls to rht
         # since there is only incr kurtosis, each Node starts kurtosis calculation from scratch

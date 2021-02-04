@@ -1,23 +1,22 @@
-from my_imports import np, rht, ins, time
+from my_imports import np, rht, ins, time, Node
 
-def rht_stream(data, N):
-
-    base = np.empty([N, data.shape[1]], np.float32)
-
-    # simulating real-time 
+def rht_stream(data, N, counter):
+    # simulating real-time (except trees constructed one by one) 
     # construct initial tree with batch algorithm on the first N points
-    for i in range(0, N):
-        base[i] = data[i]
-
-    tree = rht.rht(base, 0, np.zeros([data.shape[1], 5], dtype=np.float32))
+    tree = rht.rht(np.arange(0, N), 0, np.zeros([data.shape[1], 5], dtype=np.float32))
 
     t0 = time.time()
+    size = N
     # update existing tree
     for i in range(N, data.shape[0]):
-        tbi = time.time()
-        tree = ins.insert(tree, np.array([data[i]], np.float32))
-        tai = time.time()
-        print(f'Time for insertion #{i} = {tai-tbi}')
+        #tbi = time.time()
+        # on first iteration, store each new point inserted
+        if counter == 0:
+            Node.data_complete = np.append(Node.data_complete, np.array([data[i]], np.float32), axis=0)
+        tree = ins.insert(tree, np.array([size]))
+        size = size + 1
+        #tai = time.time()
+        #print(f'Time for insertion #{i} = {tai-tbi}')
     t1 = time.time()
 
     print("Total time for insertions = ", t1-t0)

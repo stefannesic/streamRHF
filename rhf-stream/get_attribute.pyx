@@ -2,18 +2,20 @@ from my_imports import np, ks_cy, random, Node
 
 # use kurtosis sum to get best attribute for the split
 # returns attribute, its column and a random split value
-cpdef get_attribute(float[:,:] X, float[:] kurt, float r):
+cpdef get_attribute(long[:] X, float[:] kurt, float r):
     cdef int end = X.shape[1]
     cdef float[:] a_col
     cdef float a_val, a_min, a_max
-    cdef Py_ssize_t a  
+    cdef Py_ssize_t a 
+    cdef float[:,:] X_values 
     kurt = np.cumsum(kurt)
    
     # the attribute is found in the bins of the cumulative sum of kurtoses 
     a = np.digitize(r, kurt) 
     
     try:
-        a_col = X[:, a]
+        X_values = Node.data_complete[X]
+        a_col = X_values[:, a]
     except:   
         print("ga, r=", r)
         print("ga, kurt=", np.asarray(kurt))
