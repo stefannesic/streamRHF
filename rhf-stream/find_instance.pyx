@@ -1,4 +1,4 @@
-from my_imports import np
+from my_imports import np, Node
 # returns Leaf of instance in a RHT
 cpdef find_instance(rht, x):
     cdef float a_val
@@ -13,7 +13,7 @@ cpdef find_instance(rht, x):
             return find_instance(rht.right, x)
     else:
         # leaf
-        data = np.asarray(rht.data)
+        data = Node.data_complete[np.asarray(rht.data)]
         if x in data:
             return rht.data.size
 

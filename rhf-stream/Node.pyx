@@ -3,7 +3,11 @@ from my_imports import np
 class Node:
     # max height static definition
     H = 0
+    # number of points used to construct initial forest in streaming
     N = 0
+    # the data
+    data_complete = None
+    
     def __init__(self, float value = -1, int attribute = -1, left = None, right = None, nd=0, data = None, moments = None, old_ks = 0, old_k = None):
         self.value = value
         self.attribute = attribute
