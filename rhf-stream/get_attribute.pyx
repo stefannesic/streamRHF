@@ -11,7 +11,7 @@ cpdef get_attribute(long[:] X, float[:] kurt, float r):
     kurt = np.cumsum(kurt)
    
     # the attribute is found in the bins of the cumulative sum of kurtoses 
-    a = np.digitize(r, kurt) 
+    a = np.digitize(r, kurt, True) 
     
     try:
         X_values = Node.data_complete[X]
