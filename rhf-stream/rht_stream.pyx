@@ -16,7 +16,7 @@ def rht_stream(data, N, counter):
         tree = ins.insert(tree, np.array([size]))
         size = size + 1
         #tai = time.time()
-        print(f'insertion #{i}')
+        #print(f'insertion #{i}')
     t1 = time.time()
 
     print("Total time for insertions = ", t1-t0)

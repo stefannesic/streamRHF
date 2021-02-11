@@ -22,21 +22,11 @@ def insert(root, x):
         delta_p = new_p - old_p 
       
         for a in np.where(abs(delta_p) >= 1 - rht.eps)[0]:
-            print("in for loop of delta_p")
-            print("root.attribute=", root.attribute)
-            print("a=", a)
-            print("delta_p(a)=", delta_p[a])
             if ((root.attribute != a and delta_p[a] > 0) or (root.attribute == a and delta_p[a] < 0)):                       
                 # node is replaced by a new tree 
-                print("nd=", root.nd)
-                if root.nd != 0:
-                    print("-------------------------------------------------------------------")
+                #print("nd=", root.nd)
                 return rht.rht(root.data, root.nd, moments0) 
-                
         
-        if root.nd == 0:
-            print("attributes=", np.where(abs(delta_p) >= 1 - rht.eps))
-            print("delta_p=", np.asarray(delta_p))
         # ----- insertion ------- 
 
         a = root.attribute
