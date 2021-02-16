@@ -27,10 +27,10 @@ T = int(sys.argv[3])
 H = int(sys.argv[4])
 
 iterations = int(sys.argv[5])
-step = int(sys.argv[7])
+step = float(sys.argv[7])
 for m in range(0, iterations):
     print("Iteration=", m)
-    EPS = int(sys.argv[6])
+    EPS = float(sys.argv[6])
     end = int(sys.argv[8])
 
 
