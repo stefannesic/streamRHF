@@ -17,7 +17,7 @@ if len(sys.argv) < 9:
     print("Command: python insertion_script.py [dataset] [N] [T] [H] [iterations] [EPS] [step] [end]")
     quit()
 
-mat_contents = sio.loadmat("../datasets/" + str(sys.argv[1]))
+mat_contents = sio.loadmat("../../datasets/" + str(sys.argv[1]))
 data = mat_contents['X']
 labels = mat_contents['y']
 data = data.astype('float32')
