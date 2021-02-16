@@ -14,7 +14,7 @@ def kurtosis_sum(float[:,:] X, moments):
                 sum += kurt[a]
             else:
                 kurt[a] = 0
-        else:
+        except:
             print("X=", np.asarray(X))
             print("a=", a)
             print("X(:,a)=", X[:,a])
