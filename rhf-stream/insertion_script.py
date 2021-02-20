@@ -13,8 +13,8 @@ import Node
 import rhf_stream as rhfs
 import sys 
 
-if len(sys.argv) < 9:
-    print("Command: python insertion_script.py [dataset] [N] [T] [H] [iterations] [EPS] [step] [end]")
+if len(sys.argv) < 8:
+    print("Command: python insertion_script.py [dataset] [T] [H] [iterations] [EPS] [step] [end]")
     quit()
 
 mat_contents = sio.loadmat("../../datasets/" + str(sys.argv[1]))
@@ -22,20 +22,26 @@ data = mat_contents['X']
 labels = mat_contents['y']
 data = data.astype('float32')
 
-N = int(sys.argv[2])
+# N is 1% of the dataset 
+N = data.shape[0] * 0.01
+
 T = int(sys.argv[3])
 H = int(sys.argv[4])
 
+print("N=", N)
 iterations = int(sys.argv[5])
 step = float(sys.argv[7])
 for m in range(0, iterations):
     print("Iteration=", m)
     EPS = float(sys.argv[6])
     end = int(sys.argv[8])
-
+        
 
     for j in range(0, end):
         print("EPS=", EPS)
+        # build info reinitialized
+        Node.rebuild = np.zeros([6])
+        
         t0 = time.time()
         forest = rhfs.rhf_stream(data, t=T, h=H, n=N, eps=EPS)
 
@@ -48,6 +54,7 @@ for m in range(0, iterations):
         t1 = time.time()
         print("AP=", average_precision_score(labels, scores))
         print("time (whole)=", t1 - t0)
+        print("rebuild info=", Node.rebuild)
         EPS = EPS + step
 
 
