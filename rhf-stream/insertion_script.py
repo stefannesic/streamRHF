@@ -12,12 +12,19 @@ import anomaly_score as a_s
 import Node
 import rhf_stream as rhfs
 import sys 
+import mat73
 
 if len(sys.argv) < 8:
     print("Command: python insertion_script.py [dataset] [T] [H] [iterations] [EPS] [step] [end]")
     quit()
 
-mat_contents = sio.loadmat("../datasets/" + str(sys.argv[1]))
+fname = str(sys.argv[1])
+
+if (fname == "smtp.mat"):
+    mat_contents = mat73.loadmat("../datasets/" + fname)
+else:
+    mat_contents = sio.loadmat("../datasets/" + fname)
+
 data = mat_contents['X']
 labels = mat_contents['y']
 data = data.astype('float32')
