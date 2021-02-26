@@ -18,7 +18,12 @@ if len(sys.argv) < 2:
      print("Command: python d_v_t_script.py [dataset]")
      quit()
 
-mat_contents = sio.loadmat("../datasets/" + str(sys.argv[1]))
+fname = str(sys.argv[1])
+ 
+if (fname == "smtp.mat"):
+    mat_contents = mat73.loadmat("../datasets/" + fname)
+else:
+    mat_contents = sio.loadmat("../datasets/" + fname)
 
 dataset = mat_contents['X'] 
 labels = mat_contents['y']
