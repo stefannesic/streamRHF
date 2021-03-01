@@ -2,6 +2,8 @@ from my_imports import np, ik
 
 # sum of log(Kurtosis(X[a] + 1)) of attributes 0 to d inclusive
 def kurtosis_sum(float[:,:] X, moments):
+    if (np.asarray(X).size == 0):
+        print("X is passed as empty")
     cdef float sum = 0.0
     cdef Py_ssize_t d = X.shape[1]
     cdef float[:] kurt = np.empty([d], np.float32)

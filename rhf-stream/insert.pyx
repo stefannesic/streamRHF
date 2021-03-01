@@ -5,6 +5,8 @@ def insert(root, x):
     # analyze non leaf node until x is inserted
     # if a non leaf node kurtosis changes, recalculate split
     x_value = Node.data_complete[x]
+    if (x_value.size == 0):
+        print("X value is empty and x=", x)
     # moments for tree recalculations
     moments0 = np.zeros([x_value.size,5], dtype=np.float32)
     # tree is not leaf
