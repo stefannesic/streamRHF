@@ -47,3 +47,4 @@ for i in range(0,10):
     t1 = time.time()
 
     print("Total time for rhf-cython (train) = ", t1-t0)
+    print("AP=", AP)
