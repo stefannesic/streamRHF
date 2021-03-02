@@ -19,6 +19,14 @@ def rht(X, int nd, float[:,:] moments):
     else:
         # attribute selected according to kurtosis
         X_values = Node.data_complete[X]
+    
+        '''
+        if X_values.size == 0:  
+            print("X_values=", X_values)
+            print("nd=", nd)
+            print("X=", X)
+            print("Node.data_complete=", Node.data_complete)
+        '''
         ks, kurt, moments_after = ks_cy.kurtosis_sum(X_values, moments)
       
         # if all instances are the same 
@@ -39,6 +47,16 @@ def rht(X, int nd, float[:,:] moments):
         
         Xl = X[X_values[:, a] < a_val]
         Xr = X[X_values[:, a] >= a_val]
+        if (Xl.size == 0 or Xr.size == 0):
+            print("Xl=", Xl)
+            print("Xr=", Xr)
+            print("X=", X)
+            print("a=", a)
+            print("r=", r)
+            print("a_val=", a_val)
+            print("kurt(a)=", kurt[a])
+            print("cumsum", np.cumsum(kurt))
+            print("X_values[:, a]", X_values[:, a])
 
         moments0 = np.zeros([X_values.shape[1], 5], dtype=np.float32)
         
