@@ -29,5 +29,5 @@ cpdef get_attribute(long[:] X, float[:] kurt, float r):
 
     while a_val == a_min or a_val == a_max:
         a_val = random.uniform(a_min, a_max)
-        #print("ga, a_val=", a_val) 
-        return a, a_col, a_val
+    
+    return a, a_col, a_val
