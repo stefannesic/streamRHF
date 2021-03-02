@@ -3,6 +3,7 @@ from libc.math cimport log
 
 def same_values(float[:] arr):
     cdef float temp = arr[0]
+    cdef Py_ssize_t i
     for i in range(1, arr.size):
         if arr[i] != temp:
             return False
