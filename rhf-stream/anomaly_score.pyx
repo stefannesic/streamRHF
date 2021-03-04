@@ -8,7 +8,6 @@ cpdef anomaly_score(rhf, int n, int x, float[:] x_value):
     cdef Py_ssize_t tsize = rhf.size 
     
     for i in range(0, tsize):
-        #print("as, i=", i)
         # number of distinct instances in the leaf of the given instance
         leaf_size = fi.find_instance(rhf[i], x, x_value)
         p = leaf_size / n
