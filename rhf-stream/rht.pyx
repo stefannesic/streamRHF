@@ -1,7 +1,5 @@
 from my_imports import np, Node, ks_cy, ga, random
 
-cdef float eps = 0.001
-
 # Construction of a random histogram tree
 def rht(X, int nd, float[:,:] moments):
     cdef float r, ks, a_val
@@ -20,13 +18,6 @@ def rht(X, int nd, float[:,:] moments):
         # attribute selected according to kurtosis
         X_values = Node.data_complete[X]
     
-        '''
-        if X_values.size == 0:  
-            print("X_values=", X_values)
-            print("nd=", nd)
-            print("X=", X)
-            print("Node.data_complete=", Node.data_complete)
-        '''
         ks, kurt, moments_after = ks_cy.kurtosis_sum(X_values, moments)
       
         # if all instances are the same 
@@ -40,13 +31,9 @@ def rht(X, int nd, float[:,:] moments):
         r = random.uniform(0, ks)
         a, a_col, a_val = ga.get_attribute(X, kurt, r)
 
-        #print("r=", r)
-        #print("kurt=", np.asarray(kurt))
-        #print("a=", a)
-        #print("a_val=", a_val)
-        
         Xl = X[X_values[:, a] < a_val]
         Xr = X[X_values[:, a] >= a_val]
+        
         if (Xl.size == 0 or Xr.size == 0):
             print("Xl=", Xl)
             print("Xr=", Xr)
