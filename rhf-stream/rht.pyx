@@ -8,10 +8,6 @@ def rht(X, int nd, float[:,:] moments):
 
     # last condition checks if all instances are the same --> Leaf
     if nd >= Node.H or X.shape[0] == 1:
-        # unique instances
-        #X_unique = np.unique(np.asarray(X), axis=0)
-        # returns instances without duplicates
-
         # if leaf is at max depth no use in storing moments
         return Node.Node(nd=nd, data=np.asarray(X))
     else:
