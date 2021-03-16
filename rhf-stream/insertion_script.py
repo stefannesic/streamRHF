@@ -23,7 +23,6 @@ if len(sys.argv) < 8:
 fname = str(sys.argv[1])
 
 data, labels = utils.load_dataset(fname)
-print(type(data))
 # N is 1% of the dataset 
 N = int(round(data.shape[0] * 0.01))
 
