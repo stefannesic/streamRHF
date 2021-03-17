@@ -14,7 +14,7 @@ def insert(root, x):
         # ----- check for resplit ------
         # calculate new kurtosis and sum with new data point
         root.data = np.append(root.data, x, axis=0) 
-        new_ks, new_k, root.moments = ks_cy.kurtosis_sum(x_value, root.moments)
+        new_ks, new_k, root.moments = ks_cy.kurtosis_sum(x_value, root.moments, True)
         # the previously stored probability of splitting on a 
         old_p = np.asarray(root.old_k) / root.old_ks
         # the current probability
