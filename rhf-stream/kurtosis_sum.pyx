@@ -23,7 +23,7 @@ def kurtosis_sum(float[:,:] X, moments, insert_mode=False):
     # loop over the transpose matrix in order to analyze by column
     for a in range(0, d):
         # if we're not in insertion mode, calculate if all of the values are the same
-        if !insert_mode:
+        if not(insert_mode):
             samevals = not(same_values(X[:,a]))
         else: 
             samevals = False
@@ -34,11 +34,11 @@ def kurtosis_sum(float[:,:] X, moments, insert_mode=False):
             kurt[a] = log(kurt[a] + 1)
             sum += kurt[a]
         else:
-            if (!insert_mode):
+            if not(insert_mode):
                 # label the column as having same values for future incr. checking
                 moments[a][5] = 1
             kurt[a] = 0
             # increase number of elements
-            moments[:,4] += 1
+            moments[a][4] += 1
            
     return sum, kurt, moments

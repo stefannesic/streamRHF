@@ -10,7 +10,7 @@ cpdef incr_kurtosis(float[:] data, float[:] moments):
         n = moments[4]
     else:   
         n, mean, M2, M3, M4 = (0, 0, 0, 0, 0)
-        moments = np.empty([5], dtype=np.float32)
+        moments = np.empty([6], dtype=np.float32)
 
     # for loop for when moments are initialized on multiple elements
     for x in data:
