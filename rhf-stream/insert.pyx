@@ -8,7 +8,7 @@ def insert(root, x):
     if (x_value.size == 0):
         print("X value is empty and x=", x)
     # moments for tree recalculations
-    moments0 = np.zeros([x_value.size,5], dtype=np.float32)
+    moments0 = np.zeros([x_value.size,6], dtype=np.float32)
     # tree is not leaf
     if root.left != None and root.right != None:
         # ----- check for resplit ------

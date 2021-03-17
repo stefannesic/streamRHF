@@ -41,7 +41,7 @@ def rht(X, int nd, float[:,:] moments):
             print("cumsum", np.cumsum(kurt))
             print("X_values[:, a]", X_values[:, a])
 
-        moments0 = np.zeros([X_values.shape[1], 5], dtype=np.float32)
+        moments0 = np.zeros([X_values.shape[1], 6], dtype=np.float32)
         
         # moments are stored in Node but not passed in next calls to rht
         # since there is only incr kurtosis, each Node starts kurtosis calculation from scratch
