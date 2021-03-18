@@ -1,5 +1,6 @@
 import sys 
-sys.path.insert(1, '../datasets/forStefan/')
+sys.path.insert(1, '../../datasets/forStefan/')
+sys.path.insert(2, '../')
 from timeit import timeit
 import time
 from sklearn.metrics import average_precision_score
