@@ -9,3 +9,5 @@ build/
 */cython_debug/
 *.swp
 datasets
+*/notebooks/*
+*.ipynb
