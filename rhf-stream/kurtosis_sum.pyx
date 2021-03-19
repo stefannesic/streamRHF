@@ -1,4 +1,4 @@
-from my_imports import np, ik
+from my_imports import np, ik, time, Node
 from libc.math cimport log
 
 def same_values(float[:] arr):
@@ -12,6 +12,7 @@ def same_values(float[:] arr):
 # sum of log(Kurtosis(X[a] + 1)) of attributes 0 to d inclusive
 # when the function is used for insertions, insert_mode is True
 def kurtosis_sum(float[:,:] X, moments, insert_mode=False):
+    t0 = time.time()
     cdef bint samevals
     cdef int n_elems = X.shape[0]
     cdef float sum = 0.0
@@ -19,18 +20,29 @@ def kurtosis_sum(float[:,:] X, moments, insert_mode=False):
     cdef float[:] kurt = np.empty([d], np.float32)
     if (n_elems == 0):
         print("X is passed as empty")
+    t1 = time.time()
+    Node.ksstats[0] += (t1 - t0)
 
+    t2 = time.time()
     # loop over the transpose matrix in order to analyze by column
     for a in range(0, d):
+        t2b = time.time()
         # if we're not in insertion mode, calculate if all of the values are the same
         if not(insert_mode):
             samevals = not(same_values(X[:,a]))
         else: 
             samevals = False
         
+        t2c = time.time()
+        Node.ksstats[1] += (t2c - t2b)
+        
         # samevals is always false in insert_mode so only the second part matters 
         if (samevals or (insert_mode and (moments[a][5] == 0 or moments[a][0] != X))):
+            t2d = time.time() 
+            Node.ksstats[2] += (t2d - t2c)
             kurt[a], moments[a] = ik.incr_kurtosis(X[:,a], moments[a])
+            t2e = time.time()
+            Node.ksstats[3] += (t2e - t2d)
             kurt[a] = log(kurt[a] + 1)
             sum += kurt[a]
         else:
@@ -40,5 +52,6 @@ def kurtosis_sum(float[:,:] X, moments, insert_mode=False):
             kurt[a] = 0
             # increase number of elements
             moments[a][4] += 1
-           
+    t3 = time.time()
+    Node.ksstats[4] += (t3 - t2)  
     return sum, kurt, moments
