@@ -12,5 +12,4 @@ cpdef rhf(X, int t, int h):
     # append t random histogram trees
     for i in range(t):
         rhf[i] = rht.rht(np.arange(0, X.shape[0]), 0, moments)
-
     return rhf

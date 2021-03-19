@@ -43,7 +43,6 @@ for m in range(0, iterations):
         print("EPS=", EPS)
         # build info reinitialized
         Node.rebuild = np.zeros([6])
-        
         t0 = time.time()
         forest = rhfs.rhf_stream(data, t=T, h=H, n=N, eps=EPS)
 

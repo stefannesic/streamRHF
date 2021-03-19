@@ -9,8 +9,9 @@ class Node:
     data_complete = None
     # rebuild info
     # 0 - 4 indexes for the depths, 5th index for leaf extends
-    rebuilds = None    
+    rebuild = None    
     
+    ktime = None 
     def __init__(self, float value = -1, int attribute = -1, left = None, right = None, nd=0, data = None, moments = None, old_ks = 0, old_k = None):
         self.value = value
         self.attribute = attribute
