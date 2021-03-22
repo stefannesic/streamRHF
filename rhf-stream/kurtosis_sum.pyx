@@ -9,15 +9,18 @@ def same_values(float[:] arr):
             return False
     return True 
 
-# sum of log(Kurtosis(X[a] + 1)) of attributes 0 to d inclusive
+# msum of log(Kurtosis(X[a] + 1)) of attributes 0 to d inclusive
 # when the function is used for insertions, insert_mode is True
 def kurtosis_sum(float[:,:] X, moments, insert_mode=False):
     t0 = time.time()
     cdef bint samevals
     cdef int n_elems = X.shape[0]
-    cdef float sum = 0.0
+    cdef float summ = 0.0
     cdef Py_ssize_t d = X.shape[1]
     cdef float[:] kurt = np.empty([d], np.float32)
+    cdef float[:] simpleX
+    if insert_mode:
+        X_0 = X[0]
     if (n_elems == 0):
         print("X is passed as empty")
     t1 = time.time()
@@ -37,15 +40,17 @@ def kurtosis_sum(float[:,:] X, moments, insert_mode=False):
         Node.ksstats[1] += (t2c - t2b)
         
         # samevals is always false in insert_mode so only the second part matters 
-        if (samevals or (insert_mode and (moments[a][5] == 0 or moments[a][0] != X))):
+        if (samevals or (insert_mode and (moments[a][5] == 0 or moments[a][0] != X_0[a]))):
             t2d = time.time() 
             Node.ksstats[2] += (t2d - t2c)
             kurt[a], moments[a] = ik.incr_kurtosis(X[:,a], moments[a])
-            t2e = time.time()
-            Node.ksstats[3] += (t2e - t2d)
             kurt[a] = log(kurt[a] + 1)
-            sum += kurt[a]
+            summ += kurt[a]
+            t2e = time.time()
+            Node.ksstats[3] += (t2e - t2d)            
         else:
+            t2d = time.time()
+            Node.ksstats[2] += (t2d - t2c)
             if not(insert_mode):
                 # label the column as having same values for future incr. checking
                 moments[a][5] = 1
@@ -54,4 +59,4 @@ def kurtosis_sum(float[:,:] X, moments, insert_mode=False):
             moments[a][4] += 1
     t3 = time.time()
     Node.ksstats[4] += (t3 - t2)  
-    return sum, kurt, moments
+    return summ, kurt, moments
