@@ -11,12 +11,13 @@ def same_values(float[:] arr):
 
 # msum of log(Kurtosis(X[a] + 1)) of attributes 0 to d inclusive
 # when the function is used for insertions, insert_mode is True
-def kurtosis_sum(float[:,:] X, moments, insert_mode=False):
+def kurtosis_sum(float[:,:] X, moments, bint insert_mode=False):
     t0 = time.time()
     cdef bint samevals
     cdef int n_elems = X.shape[0]
     cdef float summ = 0.0
     cdef Py_ssize_t d = X.shape[1]
+    cdef int a
     cdef float[:] kurt = np.empty([d], np.float32)
     cdef float[:] simpleX
     if insert_mode:
