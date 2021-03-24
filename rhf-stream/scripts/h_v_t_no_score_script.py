@@ -30,7 +30,7 @@ for j in range(1, 11):
     
     total_time = 0
     Node.ktime = np.zeros([10])
-    Node.ksstats = np.zeros([5], np.float32)
+    Node.ksstats = np.zeros([6], np.float32)
     for i in range(0, 10):
         t0 = time.time()
         print("H_h", H_h)
