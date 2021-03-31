@@ -53,12 +53,14 @@ def kurtosis_sum(float[:,:] X, moments, bint insert_mode=False):
             kurt[a] = 0
             # increase number of elements
             moments[a][4] += 1
-        t5 = time.time()
         # measure the time of one iteration of the for loop
         if (a == 0):
             Node.ksstats[1] += (t4-t2)
-        # measure the total time of the loop contents 
+        # measure the total time of the loop contents         
+        t5 = time.time()
         Node.ksstats[3] += (t5-t4)
+        t5b= time.time()
+        Node.ksstats[5] += (t5b-t5)
     # time entire for loop
     t3 = time.time()
     Node.ksstats[4] += (t3 - t2)  
