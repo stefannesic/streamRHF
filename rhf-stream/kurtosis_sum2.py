@@ -1,9 +1,7 @@
 from my_imports import np, ik, time, Node
-from libc.math cimport log
 
-def same_values(float[:] arr):
-    cdef float temp = arr[0]
-    cdef Py_ssize_t i
+def same_values(arr):
+    temp = arr[0]
     for i in range(1, arr.size):
         if arr[i] != temp:
             return False
@@ -11,15 +9,12 @@ def same_values(float[:] arr):
 
 # sum of log(Kurtosis(X[a] + 1)) of attributes 0 to d inclusive
 # when the function is used for insertions, insert_mode is True
-def kurtosis_sum(float[:,:] X, moments, bint insert_mode=False):
+def kurtosis_sum(X, moments, insert_mode=False):
     t0 = time.time()
-    cdef bint samevals
-    cdef int n_elems = X.shape[0]
-    cdef float summ = 0.0
-    cdef Py_ssize_t d = X.shape[1]
-    cdef int a
-    cdef float[:] kurt = np.empty([d], np.float32)
-    cdef float[:] X_0
+    n_elems = X.shape[0]
+    summ = 0.0
+    d = X.shape[1]
+    kurt = np.empty([d], np.float32)
     if insert_mode:
         X_0 = X[0]
     if (n_elems == 0):
@@ -44,7 +39,7 @@ def kurtosis_sum(float[:,:] X, moments, bint insert_mode=False):
             t7 = time.time()
             # time for incremental function
             Node.ksstats[2] += (t7- t6)        
-            kurt[a] = log(kurt[a] + 1)
+            kurt[a] = np.log(kurt[a] + 1)
             summ += kurt[a]
         else:
             if not(insert_mode):
@@ -65,7 +60,6 @@ def kurtosis_sum(float[:,:] X, moments, bint insert_mode=False):
     t3 = time.time()
     Node.ksstats[4] += (t3 - t2)  
     return summ, kurt, moments
-
 
 '''
 def kurtosis_sum_vect(float[:,:] X, moments, bint insert_mode=False):
@@ -98,8 +92,7 @@ def kurtosis_sum_vect(float[:,:] X, moments, bint insert_mode=False):
         t7 = time.time()
         # time for incremental function
         Node.ksstats[2] += (t7- t6)        
-        kurt = np.asarray(kurt) + 1
-        kurt = np.log(kurt)
+        kurt = np.log(kurt + 1)
         summ = np.sum(kurt)
     else:
         if not(insert_mode):
