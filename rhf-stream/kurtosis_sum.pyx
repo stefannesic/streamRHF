@@ -20,6 +20,7 @@ def kurtosis_sum(float[:,:] X, moments, bint insert_mode=False):
     cdef int a
     cdef float[:] kurt = np.empty([d], np.float32)
     cdef float[:] X_0
+    cdef float[:] ksstats = np.zeros([6], np.float32)
     if insert_mode:
         X_0 = X[0]
     if (n_elems == 0):
@@ -39,11 +40,11 @@ def kurtosis_sum(float[:,:] X, moments, bint insert_mode=False):
         
         # samevals is always false in insert_mode so only the second part matters 
         if (samevals or (insert_mode and (moments[a][5] == 0 or moments[a][0] != X_0[a]))):
-            t6 = time.monotonic()
+            #t6 = time.monotonic()
             kurt[a], moments[a] = ik.incr_kurtosis(X[:,a], moments[a])
-            t7 = time.monotonic()
+            #t7 = time.monotonic()
             # time for incremental function
-            Node.ksstats[2] += (t7- t6)        
+            #Node.ksstats[2] += (t7- t6)        
             kurt[a] = log(kurt[a] + 1)
             summ += kurt[a]
         else:
@@ -54,13 +55,16 @@ def kurtosis_sum(float[:,:] X, moments, bint insert_mode=False):
             # increase number of elements
             moments[a][4] += 1
         # measure the time of one iteration of the for loop
-        if (a == 0):
-            Node.ksstats[1] += (t4-t2)
+        #if (a == 0):
+            #Node.ksstats[1] += (t4-t2)
         # measure the total time of the loop contents         
         t5 = time.monotonic()
-        Node.ksstats[3] += (t5-t4)
+        ksstats[3] += (t5-t4)
         t5b= time.monotonic()
-        Node.ksstats[5] += (t5b-t5)
+        ksstats[5] += (t5b-t5)
+
+    Node.ksstats[3] += ksstats[3]
+    Node.ksstats[5] += ksstats[5]
     # time entire for loop
     t3 = time.monotonic()
     Node.ksstats[4] += (t3 - t2)  
