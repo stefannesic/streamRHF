@@ -1,6 +1,6 @@
-from my_imports import np
-cpdef incr_kurtosis(float[:] data, float[:] moments):
-    cdef float mean, M2, M3, M4, n, delta, delta_n, delta_n2, term1, n1, kurtosis 
+from my_imports import np, dataset
+cpdef incr_kurtosis(int tree, int start, int end, int a, float[:] moments):
+    cdef float mean, M2, M3, M4, n, delta, delta_n, delta_n2, term1, n1, kurtosis, x
     # check if calculating from scratch
     if moments[4] != 0:
         mean = moments[0]
@@ -11,9 +11,9 @@ cpdef incr_kurtosis(float[:] data, float[:] moments):
     else:   
         n, mean, M2, M3, M4 = (0, 0, 0, 0, 0)
         moments = np.empty([6], dtype=np.float32)
-
     # for loop for when moments are initialized on multiple elements
-    for x in data:
+    for i in range(start, end):
+        x = dataset.data[dataset.index[tree][i][0]][a]
         n1 = n
         n = n + 1
         delta = x - mean
@@ -24,7 +24,6 @@ cpdef incr_kurtosis(float[:] data, float[:] moments):
         M4 = M4 + term1 * delta_n2 * (n*n - 3*n + 3) + 6 * delta_n2 * M2 - 4 * delta_n * M3
         M3 = M3 + term1 * delta_n * (n - 2) - 3 * delta_n * M2
         M2 = M2 + term1
-
     moments[0] = mean
     moments[1] = M2
     moments[2] = M3
