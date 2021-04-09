@@ -3,8 +3,6 @@ import scipy.stats as sstats
 import random 
 import time
 import numpy as np
-import constants as constants
-import dataset as dataset
 import incr_kurtosis as ik
 import kurtosis_sum as ks_cy
 import get_attribute as ga
