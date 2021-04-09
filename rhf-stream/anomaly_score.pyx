@@ -3,7 +3,7 @@ from libc.math cimport log
 
 cpdef anomaly_score(int[:,:,:] indexes, t):
     cdef float p
-    cdef int leaf_size, i, j
+    cdef int leaf_size, i, j, data_pointer
     cdef int n = indexes.shape[1]
     cdef float[:] scores = np.zeros([n], np.float32)
     cdef int[:] elem
@@ -14,6 +14,6 @@ cpdef anomaly_score(int[:,:,:] indexes, t):
             data_pointer = elem[0]
             leaf_size = elem[1]
             p = leaf_size / n
-            scores[j] += log(1/p)
+            scores[data_pointer] += log(1/p)
     return scores
 
