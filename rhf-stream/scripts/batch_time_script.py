@@ -14,7 +14,6 @@ import rhf
 import anomaly_score as a_s
 import mat73
 import utils
-import dataset, constants
 # set the number of trees and max height
 H = 5
 T = 100
@@ -27,21 +26,11 @@ fname = str(sys.argv[1])
 
 data, labels = utils.load_dataset(fname)
 
-dataset.data = data
-N = data.shape[0]
-D = data.shape[1]
-constants.D = D
-constants.N = N
-constants.H = H
-constants.T = T
-constants.moments = np.zeros([6], np.float32)
-constants.moments0 = np.zeros([D, 6], np.float32)
-
 for i in range(0,10):
     t0 = time.time()
 
-    rhf.rhf()
-    scores = a_s.anomaly_score()
+    indexes = rhf.rhf(data, T, H)
+    scores = a_s.anomaly_score(indexes, T)
    
     AP = average_precision_score(labels, scores)
 

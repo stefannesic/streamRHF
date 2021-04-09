@@ -3,8 +3,6 @@ from Cython.Build import cythonize
 from distutils.extension import Extension
 
 ext_modules=[
-    Extension("dataset", ["dataset.pyx"]),
-    Extension("constants", ["constants.pyx"]),
     Extension("incr_kurtosis", ["incr_kurtosis.pyx"]),
 	Extension("kurtosis_sum", ["kurtosis_sum.pyx"]),
 	Extension("anomaly_score", ["anomaly_score.pyx"]),
