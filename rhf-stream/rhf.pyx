@@ -2,15 +2,16 @@ from my_imports import np, rht
 
 # construction of a random histogram forest
 cpdef rhf(float[:,:] data, int t, int h):
-    cdef int n = data.shape[0]
+    cdef int n = data.shape[0], d = data.shape[1]
     # create an empty forest of t trees each with n x 3 
     # 2 = (index in X, number of elems in leaf)
     indexes = np.empty([t, n, 2], dtype=np.intc)
-
+    # moments = trees * nodes * attributes * card({M1, M2, M3, M4, n})
+    moments = np.zeros([t, (2**h)-1, d, 5], dtype=np.float32)
     # calculate t trees in global index variable
     for i in range(t):
         # intialize dataset.index
         indexes[i,:,0] = range(0, n)
-        rht.rht(data=data, indexes=indexes[i], start=0, end=n-1, nd=0, H=h)
+        rht.rht(data=data, indexes=indexes[i], moments=moments[i], start=0, end=n-1, nd=0, H=h, nodeID=0)
 
     return indexes
