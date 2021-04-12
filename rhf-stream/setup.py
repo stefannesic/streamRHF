@@ -4,6 +4,7 @@ from distutils.extension import Extension
 
 ext_modules=[
     Extension("split", ["split.pyx"]),
+    Extension("leaves", ["leaves.pyx"]),
     Extension("incr_kurtosis", ["incr_kurtosis.pyx"]),
 	Extension("kurtosis_sum", ["kurtosis_sum.pyx"]),
 	Extension("anomaly_score", ["anomaly_score.pyx"]),
