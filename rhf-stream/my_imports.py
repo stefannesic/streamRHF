@@ -10,4 +10,5 @@ import kurtosis_sum as ks_cy
 import get_attribute as ga
 import rht as rht
 import rhf as rhf
+import insert as ins
 __all__ = ['sio', 'sstats', 'random', 'np']
