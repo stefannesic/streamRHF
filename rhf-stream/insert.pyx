@@ -1,6 +1,49 @@
-from my_imports import Node, np, rht, ks_cy, time
+from my_imports import np, rht, ks_cy, time
 # inserts new data point in leaf
-# returns updated tree if splits in path affected by new data point
+def insert(float[:,:] data, float[:,:,:] moments, split_info, int H, insertionDS, int i):
+    # analyze non leaf node until x is inserted
+    # if a non leaf node kurtosis changes, recalculate split
+    # start at root node
+    print("I came")
+    cdef int nodeID = 0, a, leaf_index, counter, nd = 0
+    cdef float a_val
+    # while leaf node isn't reached
+    while nodeID < (2**H)-1 and split_info.splits[nodeID] != 0:
+        a = split_info.attributes[nodeID]
+        a_val = split_info.values[nodeID]
+        # calculate new kurtosis
+        # TODO 
+ 
+        if data[i][a] <= a_val:
+            nodeID = nodeID*2 + 1
+        else:
+            nodeID = nodeID*2 + 2
+
+        # increase node depth
+        nd += 1
+
+    # insert leaf
+        
+    # calculate index for insertionDS
+    if nodeID >= (2**H - 1) : # leaf is at max depth
+        leaf_index = nodeID
+    else:
+        leaf_index = (2**(H - nd))*(nodeID + 1) - 1
+    
+    # at this point, leaf_index is a leaf nodeID and needs to be adjusted for indexing in insertionDS
+    leaf_index = leaf_index - ((2**H) - 1)
+    
+    counter = insertionDS.counters[leaf_index]
+    insertionDS.table[leaf_index][counter] = i
+    insertionDS.counters[leaf_index] += 1
+    
+
+    
+
+
+
+
+'''
 def insert(root, x):
     t0 = time.time()
     # analyze non leaf node until x is inserted
@@ -94,4 +137,4 @@ def insert(root, x):
         root.data = None   
         return root 
     
-
+'''
