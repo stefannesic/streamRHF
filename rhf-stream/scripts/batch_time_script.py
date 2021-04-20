@@ -27,12 +27,12 @@ if len(sys.argv) < 2:
 fname = str(sys.argv[1])
 
 data, labels = utils.load_dataset(fname)
-
+N = data.shape[0]
 for i in range(0,10):
     t0 = time.time()
-
-    indexes, split_info, insertionDS = rhf.rhf(data, T, H)
-    scores = a_s.anomaly_score(indexes, T)
+    indexes, split_info, insertionDS, moments = rhf.rhf(data, T, H)
+    #scores = a_s.anomaly_score(indexes, T)
+    scores = a_s.anomaly_score_ids(insertionDS, T, N)
     AP = average_precision_score(labels, scores)
 
     t1 = time.time()
