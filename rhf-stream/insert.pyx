@@ -4,7 +4,6 @@ def insert(float[:,:] data, float[:,:,:] moments, split_info, int H, insertionDS
     # analyze non leaf node until x is inserted
     # if a non leaf node kurtosis changes, recalculate split
     # start at root node
-    print("I came")
     cdef int nodeID = 0, a, leaf_index, counter, nd = 0
     cdef float a_val
     # while leaf node isn't reached
