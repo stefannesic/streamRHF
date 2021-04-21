@@ -17,7 +17,7 @@ def insert(float[:,:] data, float[:,:,:] moments, split_info, int H, insertionDS
         old_kurtosis_vals = split_info.kurtosis_vals[nodeID]
         old_kurtosis_sum = split_info.kurtosis_sum[nodeID]
         new_kurtosis_sum, new_kurtosis_vals, moments_res = ks_cy.kurtosis_sum_ids(data, moments[nodeID], i) 
-        moments[nodeID] = moments_res
+        #moments[nodeID] = moments_res
         # analyze kurtosis for rebuild
         # TODO
         
