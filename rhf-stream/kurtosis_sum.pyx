@@ -29,7 +29,7 @@ def kurtosis_sum_ids(float[:,:] data, float[:,:] moments, int i):
     for a in range(0, d): 
         kurt[a], moments_res = ik.incr_kurtosis_ids(data, moments[a], i, a)
         moments[a] = moments_res
-        kurt[a] = log(kurt[a] + 1)
-        ks += kurt[a]
-    
+   
+    kurt = np.log(kurt + 1) 
+    ks = np.sum(kurt)
     return ks, kurt, moments
