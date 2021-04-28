@@ -1,19 +1,93 @@
-from my_imports import np, rht, time
+from my_imports import np, ga, random, time, ks_cy
 from libc.math cimport log
+
 cpdef rht_stream(float[:,:] data, int[:,:] indexes, insertionDS, split_info, float[:,:, :] moments, int H, int N_init_pts):
+    cdef int i, N = data.shape[0]
     # simulating real-time (except trees constructed one by one) 
     # construct initial tree with batch algorithm on the first N points
     cdef int n = data.shape[0]
-    rht.rht(data, indexes, insertionDS, split_info, moments, start=0, end=N_init_pts-1, nd=0, H=H, nodeID=0) 
+    rht(data, indexes, insertionDS, split_info, moments, start=0, end=N_init_pts-1, nd=0, H=H, nodeID=0) 
     print("Initial tree constructed.")   
     t0 = time.time()
     # update existing tree
-    for i in range(N_init_pts, data.shape[0]):
+    for i in range(N_init_pts, N):
+    #for i in range(N_init_pts, data.shape[0]):
         insert(data, moments, split_info, H, insertionDS, i)
  
     t1 = time.time() 
 
     print("Total time for insertions=", t1 - t0)
+
+# sort indexes according to split
+cdef int sort(float[:,:] data, int[:,:] indexes, int start, int end, int a, float a_val):
+    cdef int i, j, temp
+    # quicksort Hoare partition scheme
+    i = start
+    j = end
+    while i < j:
+        while data[indexes[i][0]][a] <= a_val and i < j: 
+            i = i + 1
+        while data[indexes[j][0]][a] > a_val and j > i:
+            j = j - 1
+        temp = indexes[i][0]
+        indexes[i][0] = indexes[j][0]
+        indexes[j][0] = temp
+    return j
+         
+cdef void rht(float[:,:] data, int[:,:] indexes, insertionDS, split_info, float[:,:,:] moments, int start, int end, int nd, int H, int nodeID=0):
+    cdef int ls, a, split
+    cdef float ks, a_val 
+    cdef float[:] kurt
+    cdef float[:,:] moments_res
+    if (end == start or nd >= H):
+        # leaf size
+        fill_leaf(indexes, insertionDS, nodeID, nd, H, start, end) 
+    else:
+        # calculate kurtosis
+        ks, kurt, moments_res = ks_cy.kurtosis_sum(data, indexes, moments[nodeID], start, end)
+        moments[nodeID] = moments_res
+        if (ks == 0): # stop if all elems are the same
+            fill_leaf(indexes, insertionDS, nodeID, nd, H, start, end, 1) 
+
+        else: # split
+            a, a_val = ga.get_attribute(data, indexes, start, end, ks, kurt)
+            # sort indexes
+            split = sort(data, indexes, start, end, a, a_val)
+
+            # store split info
+            split_info.splits[nodeID] = split
+            split_info.attributes[nodeID] = a
+            split_info.values[nodeID] = a_val
+            split_info.kurtosis_vals[nodeID] = kurt
+            split_info.kurtosis_sum[nodeID] = ks
+            rht(data, indexes, insertionDS, split_info, moments, start, split-1, nd+1, H, nodeID=2*nodeID+1)
+            rht(data, indexes, insertionDS, split_info, moments, split, end, nd+1, H, nodeID=2*nodeID+2)
+           
+cdef void fill_leaf(int[:,:] indexes, insertionDS, int nodeID, int nd, int H, int start, int end, int ls = 0):
+    cdef int i, leaf_index
+    # leaf size is not set, calculate it.
+    if ls == 0:
+        ls = end - start + 1
+
+    # calculate index of insertionDS
+    if nodeID >= (2**H - 1) : # leaf is at max depth
+        leaf_index = nodeID
+    else:
+        leaf_index = (2**(H - nd))*(nodeID + 1) - 1
+    
+    # at this point, leaf_index is nodeID and needs to be adjusted for indexing
+    leaf_index = leaf_index - ((2**H) - 1)
+
+    for i in range(start, end+1):  
+        # store leaf in insertion DS
+        # fetch counter
+        counter = insertionDS.counters[leaf_index]
+        # get the actual pointer to the dataset indexes[k][0]
+        insertionDS.table[leaf_index][counter] = indexes[i][0]
+        # increment counter
+        insertionDS.counters[leaf_index] += 1
+
+        indexes[i][1] = ls
 
 # inserts new data point in leaf
 cdef void insert(float[:,:] data, float[:,:,:] moments, split_info, int H, insertionDS, int i):
@@ -26,6 +100,7 @@ cdef void insert(float[:,:] data, float[:,:,:] moments, split_info, int H, inser
     cdef float[:] new_kurtosis_vals = np.empty([d], np.float32)
     cdef float[:,:] moments_calc
     cdef float[:] M2, M3, M4, n
+    
     # while leaf node isn't reached
     while nodeID < (2**H)-1 and split_info.splits[nodeID] != 0:
         split_a = split_info.attributes[nodeID]
@@ -60,7 +135,7 @@ cdef void insert(float[:,:] data, float[:,:,:] moments, split_info, int H, inser
         nd += 1
 
     # insert leaf
-        
+    
     # calculate index for insertionDS
     if nodeID >= (2**H - 1) : # leaf is at max depth
         leaf_index = nodeID
