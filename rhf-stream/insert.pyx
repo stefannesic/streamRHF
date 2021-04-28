@@ -1,7 +1,7 @@
 from my_imports import np, rht, ks_cy, time
 from libc.math cimport log
 # inserts new data point in leaf
-cpdef void insert(float[:,:] data, float[:,:,:] moments, split_info, int H, insertionDS, int i):
+cdef void insert(float[:,:] data, float[:,:,:] moments, split_info, int H, insertionDS, int i):
     # analyze non leaf node until x is inserted
     # if a non leaf node kurtosis changes, recalculate split
     # start at root node
