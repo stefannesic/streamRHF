@@ -30,22 +30,20 @@ N = data.shape[0]
 print("N_init_pts=", N_init_pts)
 iterations = int(sys.argv[4])
 step = float(sys.argv[6])
+EPS = float(sys.argv[5])
+end = int(sys.argv[7])
+
 for m in range(0, iterations):
     print("Iteration=", m)
-    EPS = float(sys.argv[5])
-    end = int(sys.argv[7])
-        
-
+    epsilon = EPS    
     for j in range(0, end):
-        #print("EPS=", EPS)
         # build info reinitialized
         t0 = time.time()
-        indexes, split_info, insertionDS, moments =  rhfs.rhf_stream(data, T, H, N_init_pts) 
+        insertionDS = rhfs.rhf_stream(data, T, H, N_init_pts) 
         scores = a_s.anomaly_score_ids(insertionDS, T, N)
-   
         t1 = time.time()
         print("AP=", average_precision_score(labels, scores))
         print("time (whole)=", t1 - t0)
-        EPS = EPS + step
+        epsilon = epsilon + step
 
 
