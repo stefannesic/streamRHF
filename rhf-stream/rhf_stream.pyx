@@ -22,7 +22,7 @@ cpdef rhf_stream(float[:,:] data, int t, int h, int N_init_pts):
         insertionDS[i] = leaves.Leaves(h, W_MAX)
         rht_stream(data=data, indexes=indexes[i], insertionDS=insertionDS[i], split_info=splits[i], moments=moments[i], H=h, N_init_pts=N_init_pts) 
            
-    return indexes, splits, insertionDS, moments
+    return insertionDS
 
 
 from my_imports import np, ga, random, time, ks_cy, split, leaves
