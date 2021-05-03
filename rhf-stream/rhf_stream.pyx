@@ -1,5 +1,19 @@
-from my_imports import np, ga, random, time, ks_cy, split, leaves
+from my_imports import np, ga, random, time, ks_cy, leaves
 from libc.math cimport log
+
+cdef class Split:
+    cdef int[:,:] splits
+    cdef int[:,:] attributes
+    cdef float[:,:] values
+    cdef float[:,:,:] kurtosis_vals
+    cdef float[:,:] kurtosis_sum
+    def __init__(self, int t, int h, int d):
+        self.splits = np.zeros([t,(2**h)-1], np.intc)
+        self.attributes = np.empty([t,(2**h)-1], np.intc)
+        self.values = np.empty([t,(2**h)-1], np.float32)
+        self.kurtosis_vals = np.empty([t,(2**h)-1, d], np.float32)
+        self.kurtosis_sum = np.empty([t,(2**h)-1], np.float32)
+
 
 # construction of a random histogram forest
 cpdef rhf_stream(float[:,:] data, int t, int h, int N_init_pts):
@@ -10,7 +24,7 @@ cpdef rhf_stream(float[:,:] data, int t, int h, int N_init_pts):
     indexes = np.empty([t, N_init_pts, 2], dtype=np.intc)
     # moments = trees * nodes * attributes * card({M1, M2, M3, M4, n})
     moments = np.zeros([t, (2**h)-1, d, 6], dtype=np.float32)
-    splits = np.empty([t], dtype=object)
+    cdef Split splits = Split(t, h, d)
     # create secondary data structure for insertion algorithm
     insertionDS = np.empty([t], dtype=object)
     # calculate t trees in global index variable
@@ -18,26 +32,25 @@ cpdef rhf_stream(float[:,:] data, int t, int h, int N_init_pts):
         print("i=", i)
         # intialize dataset.index
         indexes[i,:,0] = range(0, N_init_pts)
-        splits[i] = split.Split(h, d)
         insertionDS[i] = leaves.Leaves(h, W_MAX)
-        rht_stream(data=data, indexes=indexes[i], insertionDS=insertionDS[i], split_info=splits[i], moments=moments[i], H=h, N_init_pts=N_init_pts) 
+        rht_stream(data=data, indexes=indexes[i], insertionDS=insertionDS[i], split_info=splits, moments=moments[i], H=h, N_init_pts=N_init_pts, t_id=i) 
            
     return insertionDS
 
 
 from my_imports import np, ga, random, time, ks_cy, split, leaves
 
-cdef void rht_stream(float[:,:] data, int[:,:] indexes, insertionDS, split_info, float[:,:, :] moments, int H, int N_init_pts):
+cdef void rht_stream(float[:,:] data, int[:,:] indexes, insertionDS, Split split_info, float[:,:, :] moments, int H, int N_init_pts, int t_id):
     cdef int i, N = data.shape[0]
     # simulating real-time (except trees constructed one by one) 
     # construct initial tree with batch algorithm on the first N points
     cdef int n = data.shape[0]
-    rht(data, indexes, insertionDS, split_info, moments, start=0, end=N_init_pts-1, nd=0, H=H, nodeID=0) 
+    rht(data, indexes, insertionDS, split_info, moments, start=0, end=N_init_pts-1, nd=0, H=H, nodeID=0, t_id=t_id) 
     print("Initial tree constructed.")   
     t0 = time.time()
     # update existing tree
     for i in range(N_init_pts, N):
-        insert(data, moments, split_info, H, insertionDS, i)
+        insert(data, moments, split_info, H, insertionDS, i, t_id)
  
     t1 = time.time() 
 
@@ -59,7 +72,7 @@ cdef int sort(float[:,:] data, int[:,:] indexes, int start, int end, int a, floa
         indexes[j][0] = temp
     return j
          
-cdef void rht(float[:,:] data, int[:,:] indexes, insertionDS, split_info, float[:,:,:] moments, int start, int end, int nd, int H, int nodeID=0):
+cdef void rht(float[:,:] data, int[:,:] indexes, insertionDS, Split split_info, float[:,:,:] moments, int start, int end, int nd, int H, int nodeID=0, int t_id=0):
     cdef int ls, a, split
     cdef float ks, a_val 
     cdef float[:] kurt
@@ -80,13 +93,13 @@ cdef void rht(float[:,:] data, int[:,:] indexes, insertionDS, split_info, float[
             split = sort(data, indexes, start, end, a, a_val)
 
             # store split info
-            split_info.splits[nodeID] = split
-            split_info.attributes[nodeID] = a
-            split_info.values[nodeID] = a_val
-            split_info.kurtosis_vals[nodeID] = kurt
-            split_info.kurtosis_sum[nodeID] = ks
-            rht(data, indexes, insertionDS, split_info, moments, start, split-1, nd+1, H, nodeID=2*nodeID+1)
-            rht(data, indexes, insertionDS, split_info, moments, split, end, nd+1, H, nodeID=2*nodeID+2)
+            split_info.splits[t_id][nodeID] = split
+            split_info.attributes[t_id][nodeID] = a
+            split_info.values[t_id][nodeID] = a_val
+            split_info.kurtosis_vals[t_id][nodeID] = kurt
+            split_info.kurtosis_sum[t_id][nodeID] = ks
+            rht(data, indexes, insertionDS, split_info, moments, start, split-1, nd+1, H, nodeID=2*nodeID+1, t_id=t_id)
+            rht(data, indexes, insertionDS, split_info, moments, split, end, nd+1, H, nodeID=2*nodeID+2, t_id=t_id)
            
 cdef void fill_leaf(int[:,:] indexes, insertionDS, int nodeID, int nd, int H, int start, int end, int ls = 0):
     cdef int i, leaf_index
@@ -115,28 +128,31 @@ cdef void fill_leaf(int[:,:] indexes, insertionDS, int nodeID, int nd, int H, in
         indexes[i][1] = ls
 
 # inserts new data point in leaf
-cdef void insert(float[:,:] data, float[:,:,:] moments, split_info, int H, insertionDS, int i):
+cdef void insert(float[:,:] data, float[:,:,:] moments, Split split_info, int H, insertionDS, int i, int t_id):
     
     # analyze non leaf node until x is inserted
     # if a non leaf node kurtosis changes, recalculate split
     # start at root node
     cdef int nodeID = 0, a, split_a, leaf_index, counter, nd = 0, d = data.shape[1], ks = 0
-    
     cdef float split_a_val, old_kurtosis_sum, new_kurtosis_sum
     cdef float[:] old_kurtosis_vals
     # THE NP.EMPTY GETS TIME FROM 0.0000001 VS. 0.03
     cdef float[:,:] moments_calc
     cdef float[:] M2, M3, M4, n, new_kurtosis_vals
-    
+    cdef int[:] split_attributes = split_info.attributes[t_id]
+    cdef float[:] split_vals = split_info.values[t_id]
+    cdef int[:] split_splits = split_info.splits[t_id]
+    cdef float[:,:] split_kvals = split_info.kurtosis_vals[t_id]
+    cdef float[:] split_ks = split_info.kurtosis_sum[t_id]
     # while leaf node isn't reached
-    while nodeID < (2**H)-1 and split_info.splits[nodeID] != 0:
+    while nodeID < (2**H)-1 and split_splits[nodeID] != 0:
          
-        split_a = split_info.attributes[nodeID]
-        split_a_val = split_info.values[nodeID]
+        split_a = split_attributes[nodeID]
+        split_a_val = split_vals[nodeID]
         # calculate new kurtosis
          
-        old_kurtosis_vals = split_info.kurtosis_vals[nodeID]
-        old_kurtosis_sum = split_info.kurtosis_sum[nodeID]
+        old_kurtosis_vals = split_kvals[nodeID]
+        old_kurtosis_sum = split_ks[nodeID]
         kurtosis_sum_ids(data, moments[nodeID], i) 
         moments_calc = moments[nodeID] 
         M2 = moments_calc[:,1]
