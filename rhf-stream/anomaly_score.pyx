@@ -16,27 +16,27 @@ cpdef anomaly_score(int[:,:,:] indexes, Py_ssize_t t):
             p = leaf_size / n
             scores[data_pointer] += log(1/p)
     return scores
-
+'''
 # anomaly score for insertion data structure)
-cpdef anomaly_score_ids(insertionDS, Py_ssize_t t, int n):
+cpdef anomaly_score_ids(Leaves insertionDS, Py_ssize_t t, int n):
     cdef float score
     cdef int i, j, data_pointer
     cdef Py_ssize_t ids_size, leaf_size
     cdef float[:] scores = np.zeros([n], np.float32)
     
     # get table size, it's the same for all trees
-    ids_size = insertionDS[0].table.shape[0] 
+    ids_size = insertionDS.table[0].shape[0] 
         
     for i in range (0, t): 
        for j in range(0, ids_size):
             # get leaf_size and calculate score
-            leaf_size = insertionDS[i].counters[j]
+            leaf_size = insertionDS.counters[i][j]
             if (leaf_size != 0):
                 score = leaf_size / n
                 score = log(1/leaf_size)
                 for k in range(0, leaf_size):
-                    data_pointer = insertionDS[i].table[j][k]
+                    data_pointer = insertionDS.table[i][j][k]
                     scores[data_pointer] += score
     return scores
-
+'''
    
