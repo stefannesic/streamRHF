@@ -227,11 +227,11 @@ cdef float kurtosis_sum_ids(float[:,:] data, float[:,:] moments, float[:] kurtos
         M2 = M2 + term1
 
         if M4 == 0:
-            kurtosis_arr[a] = 0
+            kurtosis = 0
         else:
-            kurtosis_arr[a] = (n * M4) / (M2 * M2)
-            kurtosis_arr[a] = log(kurtosis_arr[a] + 1)
-            kurtosis_sum += kurtosis_arr[a]
+            kurtosis = (n * M4) / (M2 * M2)
+            kurtosis = log(kurtosis + 1)
+            kurtosis_sum += kurtosis
          
         
         moments[a][0] = mean
@@ -240,7 +240,7 @@ cdef float kurtosis_sum_ids(float[:,:] data, float[:,:] moments, float[:] kurtos
         moments[a][3] = M4
         moments[a][4] = n
         #moments[a][5] = kurtosis
-        
+        kurtosis_arr[a] = kurtosis
         return kurtosis_sum
               
        
