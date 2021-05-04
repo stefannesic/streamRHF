@@ -137,34 +137,40 @@ cdef void insert(float[:,:] data, float[:,:,:] moments, Split split_info, int H,
     cdef float split_a_val, old_kurtosis_sum, new_kurtosis_sum
     cdef float[:] old_kurtosis_vals
     # THE NP.EMPTY GETS TIME FROM 0.0000001 VS. 0.03
-    cdef float[:,:] moments_calc
-    cdef float[:] M2, M3, M4, n, new_kurtosis_vals
+    cdef float[:] moments_calc
+    cdef float[:] new_kurtosis_vals
+    cdef float M2, M4
     cdef int[:] split_attributes = split_info.attributes[t_id]
     cdef float[:] split_vals = split_info.values[t_id]
     cdef int[:] split_splits = split_info.splits[t_id]
     cdef float[:,:] split_kvals = split_info.kurtosis_vals[t_id]
     cdef float[:] split_ks = split_info.kurtosis_sum[t_id]
     # while leaf node isn't reached
-    while nodeID < (2**H)-1 and split_splits[nodeID] != 0:
-         
+    
+    while nodeID < (2**H)-1 and split_splits[nodeID] != 0:      
         split_a = split_attributes[nodeID]
         split_a_val = split_vals[nodeID]
+        
         # calculate new kurtosis
          
         old_kurtosis_vals = split_kvals[nodeID]
         old_kurtosis_sum = split_ks[nodeID]
         kurtosis_sum_ids(data, moments[nodeID], i) 
-        moments_calc = moments[nodeID] 
-        M2 = moments_calc[:,1]
-        M3 = moments_calc[:,2]
-        M4 = moments_calc[:,3]
-        n = moments_calc[:,4]
-        new_kurtosis_vals = moments_calc[:,5]
+        #moments_calc = moments[nodeID] 
+        #M2 = moments_calc[:,1]
+        #M3 = moments_calc[:,2]
+        #M4 = moments_calc[:,3]
+        #n = moments_calc[:,4]
+        new_kurtosis_vals = moments[nodeID,:,5]
+    
         for a in range(0,d):
-            if M4[a] == 0:
+            M2 = moments[nodeID][a][1]
+            M4 = moments[nodeID][a][3]
+            #moments_calc = moments[nodeID][a]
+            if M4 == 0:
                 new_kurtosis_vals[a] = 0
             else:
-                new_kurtosis_vals[a] = (n[a] * M4[a]) / M2[a] * M2[a]
+                new_kurtosis_vals[a] = (moments[nodeID][a][4] * M4) / M2 * M2
                 new_kurtosis_vals[a] = log(new_kurtosis_vals[a] + 1)
             new_kurtosis_sum += new_kurtosis_vals[a]
         
@@ -194,6 +200,7 @@ cdef void insert(float[:,:] data, float[:,:,:] moments, Split split_info, int H,
     counter = insertionDS.counters[leaf_index]
     insertionDS.table[leaf_index][counter] = i
     insertionDS.counters[leaf_index] += 1
+    
 
 
 cdef void kurtosis_sum_ids(float[:,:] data, float[:,:] moments, int i):
