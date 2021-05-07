@@ -23,6 +23,30 @@ cdef class Leaves:
         # all set to -1
         self.table = np.zeros([t,2**H, W_MAX], dtype=np.intc) - 1
 
+# construction of a random histogram forest
+cpdef rhf(float[:,:] data, int t, int h):
+    cdef int n = data.shape[0], d = data.shape[1]
+    cdef int W_MAX = n
+    cdef int[:] temp
+    # create an empty forest of t trees each with n x 3 
+    # 2 = (index in X, number of elems in leaf)
+    cdef int[:,:,:] indexes = np.empty([t, n, 2], dtype=np.intc)
+    # moments = trees * nodes * attributes * card({M1, M2, M3, M4, n})
+    cdef float[:,:,:,:] moments = np.zeros([t, (2**h)-1, d, 6], dtype=np.float32)
+    cdef Split splits = Split(t, h, d)
+    # create secondary data structure for insertion algorithm
+    cdef Leaves insertionDS = Leaves(t, h, W_MAX)
+    cdef float[:] kurtosis_arr = np.empty([d], np.float32)
+    # calculate t trees in global index variable
+    for i in range(t):
+        # intialize dataset.index
+        temp = np.arange(0,n, dtype=np.intc)
+        indexes[i,:,0] = temp
+        rht(data=data, indexes=indexes[i], insertionDS=insertionDS, split_info=splits, moments=moments[i], kurtosis_arr=kurtosis_arr, start=0, end=n-1, nd=0, H=h, d=d, nodeID=0, t_id=i) 
+           
+    return insertionDS
+
+ 
 # anomaly score for insertion data structure)
 cpdef anomaly_score_ids(Leaves insertionDS, Py_ssize_t t, int n):
     cdef float score
@@ -244,6 +268,7 @@ cdef void fill_leaf(int[:,:] indexes, Leaves insertionDS, int nodeID, int nd, in
 
 # inserts new data point in leaf
 cdef void insert(float[:,:] data, float[:,:,:] moments, Split split_info, int H, Leaves insertionDS, float[:] new_kurtosis_vals, int i, int t_id):
+
     # analyze non leaf node until x is inserted
     # if a non leaf node kurtosis changes, recalculate split
     # start at root node
@@ -259,7 +284,7 @@ cdef void insert(float[:,:] data, float[:,:,:] moments, Split split_info, int H,
     cdef float[:,:] split_kvals = split_info.kurtosis_vals[t_id]
     cdef float[:] split_ks = split_info.kurtosis_sum[t_id]
     # while leaf node isn't reached
-     
+ 
     while nodeID < (2**H)-1 and split_splits[nodeID] != 0:      
         split_a = split_attributes[nodeID]
         split_a_val = split_vals[nodeID]
@@ -279,8 +304,6 @@ cdef void insert(float[:,:] data, float[:,:,:] moments, Split split_info, int H,
 
         # increase node depth
         nd += 1
-    
-    
     
     # insert leaf
     
