@@ -78,11 +78,10 @@ cdef void rht_stream(float[:,:] data, int[:,:] indexes, Leaves insertionDS, Spli
     # simulating real-time (except trees constructed one by one) 
     # construct initial tree with batch algorithm on the first N points
     cdef int d = data.shape[1]
-    rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, start=0, end=N_init_pts-1, nd=0, H=H, nodeID=0, t_id=t_id) 
-    print("Initial tree constructed.")   
+    rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, start=0, end=N_init_pts-1, nd=0, H=H, d=d, nodeID=0, t_id=t_id) 
     t0 = time.time()
     # update existing tree
- 
+     
     for i in range(N_init_pts, N):
         insert(data, moments, split_info, H, insertionDS, kurtosis_arr, i, t_id)
     
@@ -106,7 +105,7 @@ cdef int sort(float[:,:] data, int[:,:] indexes, int start, int end, int a, floa
         indexes[j][0] = temp
     return j
          
-cdef void rht(float[:,:] data, int[:,:] indexes, Leaves insertionDS, Split split_info, float[:,:,:] moments, float[:] kurtosis_arr, int start, int end, int nd, int H, int nodeID=0, int t_id=0):
+cdef void rht(float[:,:] data, int[:,:] indexes, Leaves insertionDS, Split split_info, float[:,:,:] moments, float[:] kurtosis_arr, int start, int end, int nd, int H, int d, int nodeID=0, int t_id=0):
     cdef int ls, a, split
     cdef float ks, a_val 
     cdef float[:,:] moments_res
@@ -120,7 +119,7 @@ cdef void rht(float[:,:] data, int[:,:] indexes, Leaves insertionDS, Split split
             fill_leaf(indexes, insertionDS, nodeID, nd, H, start, end, 1, t_id) 
 
         else: # split
-            a, a_val = get_attribute(data, indexes, start, end, ks, kurtosis_arr)
+            a, a_val = get_attribute(data, indexes, start, end, ks, kurtosis_arr, d)
             # sort indexes
             split = sort(data, indexes, start, end, a, a_val)
 
@@ -130,33 +129,44 @@ cdef void rht(float[:,:] data, int[:,:] indexes, Leaves insertionDS, Split split
             split_info.values[t_id][nodeID] = a_val
             split_info.kurtosis_vals[t_id][nodeID] = kurtosis_arr
             split_info.kurtosis_sum[t_id][nodeID] = ks
-            rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, start, split-1, nd+1, H, nodeID=2*nodeID+1, t_id=t_id)
-            rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, split, end, nd+1, H, nodeID=2*nodeID+2, t_id=t_id)
+            rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, start, split-1, nd+1, H, d, nodeID=2*nodeID+1, t_id=t_id)
+            rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, split, end, nd+1, H, d, nodeID=2*nodeID+2, t_id=t_id)
 
 
-cdef (int, float) get_attribute(float[:,:] data, int[:,:] indexes, int start, int end, float ks, float[:] kurt):
-    cdef int a, i, data_index
-    cdef float a_val, a_min, a_max, temp, r
+cdef (int, float) get_attribute(float[:,:] data, int[:,:] indexes, int start, int end, float ks, float[:] kurt, int d):
+    cdef int a = -1, i, data_index
+    cdef float a_val, a_min, a_max, temp, r, cumul = 0
     
-    r = random.uniform(0, ks)
-   
-    kurt = np.cumsum(kurt)
-    
-    # the attribute is found in the bins of the cumulative sum of kurtoses 
-    a = np.digitize(r, kurt, True)
-    # get min and max
-    data_index = indexes[start][0]
-    a_min = data[data_index][a]
-    a_max = a_min
+    # keep choosing a different r until a_min != a_max
+    # useful if kurt(a0) = 0 and r = 0... stuck in loop!
+    while True:
+        r = random.uniform(0, ks)
+        # cumulative sum
+        for i in range(0, d):
+            temp = kurt[i]
+            kurt[i] += cumul 
+            if i == 0:
+                if r <= kurt[i]:
+                    a = i
+            else:
+                if r > kurt[i-1] and r <= kurt[i]:
+                    a = i 
+            cumul += temp
+        # get min and max
+        data_index = indexes[start][0]
+        a_min = data[data_index][a]
+        a_max = a_min
 
-    for i in range(start, end+1):
-            temp = data[indexes[i][0]][a]
-            if a_min > temp:
-                a_min = temp
-            elif a_max < temp:
-                a_max = temp
+        for i in range(start, end+1):
+                temp = data[indexes[i][0]][a]
+                if a_min > temp:
+                    a_min = temp
+                elif a_max < temp:
+                    a_max = temp
+        if a_min != a_max: 
+            break 
     
-    a_val = a_min
+    a_val = random.uniform(a_min, a_max)
     
     while a_val == a_min or a_val == a_max:
         a_val = random.uniform(a_min, a_max)
