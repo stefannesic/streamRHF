@@ -28,6 +28,7 @@ cpdef rhf(float[:,:] data, int t, int h):
     cdef int n = data.shape[0], d = data.shape[1]
     cdef int W_MAX = n
     cdef int[:] temp
+    cdef Py_ssize_t i 
     # create an empty forest of t trees each with n x 3 
     # 2 = (index in X, number of elems in leaf)
     cdef int[:,:,:] indexes = np.empty([t, n, 2], dtype=np.intc)
@@ -50,8 +51,7 @@ cpdef rhf(float[:,:] data, int t, int h):
 # anomaly score for insertion data structure)
 cpdef anomaly_score_ids(Leaves insertionDS, Py_ssize_t t, int n):
     cdef float score
-    cdef int i, j, data_pointer
-    cdef Py_ssize_t ids_size, leaf_size
+    cdef Py_ssize_t i, j, k, data_pointer, ids_size, leaf_size
     cdef float[:] scores = np.zeros([n], np.float32)
     
     # get table size, it's the same for all trees
@@ -74,12 +74,13 @@ cpdef anomaly_score_ids(Leaves insertionDS, Py_ssize_t t, int n):
 cpdef rhf_stream(float[:,:] data, int t, int h, int N_init_pts):
     cdef int n = data.shape[0], d = data.shape[1]
     cdef int W_MAX = n
-
+    cdef Py_ssize_t i
+    cdef int[:] index_range
     # create an empty forest of t trees each with n x 3 
     # 2 = (index in X, number of elems in leaf)
-    indexes = np.empty([t, N_init_pts, 2], dtype=np.intc)
+    cdef int[:,:,:] indexes = np.empty([t, N_init_pts, 2], dtype=np.intc)
     # moments = trees * nodes * attributes * card({M1, M2, M3, M4, n})
-    moments = np.zeros([t, (2**h)-1, d, 6], dtype=np.float32)
+    cdef float[:,:,:,:] moments = np.zeros([t, (2**h)-1, d, 6], dtype=np.float32)
     cdef Split splits = Split(t, h, d)
     # create secondary data structure for insertion algorithm
     cdef Leaves insertionDS = Leaves(t, h, W_MAX)
@@ -88,8 +89,8 @@ cpdef rhf_stream(float[:,:] data, int t, int h, int N_init_pts):
     for i in range(t):
         print("i=", i)
         # intialize dataset.index
-        indexes[i,:,0] = range(0, N_init_pts)
-        #insertionDS[i] = leaves.Leaves(h, W_MAX)
+        index_range = np.arange(0, N_init_pts, dtype=np.intc)
+        indexes[i,:,0] = index_range
         rht_stream(data=data, indexes=indexes[i], insertionDS=insertionDS, split_info=splits, moments=moments[i], kurtosis_arr=kurtosis_arr, H=h, N_init_pts=N_init_pts, t_id=i) 
            
     return insertionDS
@@ -114,8 +115,9 @@ cdef void rht_stream(float[:,:] data, int[:,:] indexes, Leaves insertionDS, Spli
     print("Total time for insertions=", t1 - t0)
 
 # sort indexes according to split
-cdef int sort(float[:,:] data, int[:,:] indexes, int start, int end, int a, float a_val):
-    cdef int i, j, temp
+cdef int sort(float[:,:] data, int[:,:] indexes, int start, int end, Py_ssize_t a, float a_val):
+    cdef int temp
+    cdef Py_ssize_t i, j
     # quicksort Hoare partition scheme
     i = start
     j = end
@@ -129,7 +131,7 @@ cdef int sort(float[:,:] data, int[:,:] indexes, int start, int end, int a, floa
         indexes[j][0] = temp
     return j
          
-cdef void rht(float[:,:] data, int[:,:] indexes, Leaves insertionDS, Split split_info, float[:,:,:] moments, float[:] kurtosis_arr, int start, int end, int nd, int H, int d, int nodeID=0, int t_id=0):
+cdef void rht(float[:,:] data, int[:,:] indexes, Leaves insertionDS, Split split_info, float[:,:,:] moments, float[:] kurtosis_arr, int start, int end, int nd, int H, int d, Py_ssize_t nodeID=0, Py_ssize_t t_id=0):
     cdef int ls, a, split
     cdef float ks, a_val 
     cdef float[:,:] moments_res
@@ -157,8 +159,8 @@ cdef void rht(float[:,:] data, int[:,:] indexes, Leaves insertionDS, Split split
             rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, split, end, nd+1, H, d, nodeID=2*nodeID+2, t_id=t_id)
 
 
-cdef (int, float) get_attribute(float[:,:] data, int[:,:] indexes, int start, int end, float ks, float[:] kurt, int d):
-    cdef int a = -1, i, data_index
+cdef (int, float) get_attribute(float[:,:] data, int[:,:] indexes, Py_ssize_t start, Py_ssize_t end, float ks, float[:] kurt, int d):
+    cdef Py_ssize_t i, a = -1, data_index
     cdef float a_val, a_min, a_max, temp, r, cumul = 0
     
     # keep choosing a different r until a_min != a_max
@@ -198,8 +200,7 @@ cdef (int, float) get_attribute(float[:,:] data, int[:,:] indexes, int start, in
     return a, a_val
 
 cdef float kurtosis_sum(float[:,:] data, int[:,:] indexes, float[:,:] moments, float[:] kurtosis_arr, int start, int end):
-    cdef Py_ssize_t d = data.shape[1]
-    cdef int a
+    cdef Py_ssize_t d = data.shape[1], a
     cdef float ks = 0
     for a in range(0, d): 
         kurtosis_arr[a] = incr_kurtosis(data, indexes, moments[a], start, end, a)
@@ -207,11 +208,10 @@ cdef float kurtosis_sum(float[:,:] data, int[:,:] indexes, float[:,:] moments, f
         ks += kurtosis_arr[a]
     return ks
 
-cdef float incr_kurtosis(float[:,:] data, int[:,:] indexes, float[:] moments, int start, int end, int a):
+cdef float incr_kurtosis(float[:,:] data, int[:,:] indexes, float[:] moments, int start, int end, Py_ssize_t a):
     cdef float mean, M2, M3, M4, n, delta, delta_n, delta_n2, term1, n1, kurtosis, x
-  
+    cdef Py_ssize_t i 
     n, mean, M2, M3, M4 = (0, 0, 0, 0, 0)
-    #moments = np.empty([6], dtype=np.float32)
 
     # for loop for when moments are initialized on multiple elements
     for i in range(start, end+1):
@@ -241,8 +241,8 @@ cdef float incr_kurtosis(float[:,:] data, int[:,:] indexes, float[:] moments, in
         return kurtosis
 
           
-cdef void fill_leaf(int[:,:] indexes, Leaves insertionDS, int nodeID, int nd, int H, int start, int end, int ls = 0, int t_id=0):
-    cdef int i, leaf_index, counter
+cdef void fill_leaf(int[:,:] indexes, Leaves insertionDS, int nodeID, int nd, int H, int start, int end, int ls = 0, Py_ssize_t t_id=0):
+    cdef Py_ssize_t i, leaf_index, counter
     # leaf size is not set, calculate it.
     if ls == 0:
         ls = end - start + 1
@@ -267,12 +267,13 @@ cdef void fill_leaf(int[:,:] indexes, Leaves insertionDS, int nodeID, int nd, in
         indexes[i][1] = ls
 
 # inserts new data point in leaf
-cdef void insert(float[:,:] data, float[:,:,:] moments, Split split_info, int H, Leaves insertionDS, float[:] new_kurtosis_vals, int i, int t_id):
+cdef void insert(float[:,:] data, float[:,:,:] moments, Split split_info, int H, Leaves insertionDS, float[:] new_kurtosis_vals, Py_ssize_t i, int t_id):
 
     # analyze non leaf node until x is inserted
     # if a non leaf node kurtosis changes, recalculate split
     # start at root node
-    cdef int nodeID = 0, a, split_a, leaf_index, counter, nd = 0, d = data.shape[1], ks = 0
+    cdef Py_ssize_t nodeID = 0, split_a, leaf_index, counter 
+    cdef int a, nd = 0, d = data.shape[1], ks = 0
     cdef float split_a_val, old_kurtosis_sum, new_kurtosis_sum
     cdef float[:] old_kurtosis_vals
     cdef float[:] moments_calc
@@ -322,9 +323,8 @@ cdef void insert(float[:,:] data, float[:,:,:] moments, Split split_info, int H,
     
 
 
-cdef float kurtosis_sum_ids(float[:,:] data, float[:,:] moments, float[:] kurtosis_arr, int i):
-    cdef Py_ssize_t d = data.shape[1]
-    cdef int a
+cdef float kurtosis_sum_ids(float[:,:] data, float[:,:] moments, float[:] kurtosis_arr, Py_ssize_t i):
+    cdef Py_ssize_t d = data.shape[1], a
     cdef float mean, M2, M3, M4, n, delta, delta_n, delta_n2, term1, n1, x, kurtosis_sum = 0, kurtosis
     for a in range(0, d): 
         mean = moments[a][0]
@@ -358,7 +358,6 @@ cdef float kurtosis_sum_ids(float[:,:] data, float[:,:] moments, float[:] kurtos
         moments[a][2] = M3
         moments[a][3] = M4
         moments[a][4] = n
-        #moments[a][5] = kurtosis
         kurtosis_arr[a] = kurtosis
         return kurtosis_sum
               
