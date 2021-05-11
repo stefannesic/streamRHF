@@ -32,13 +32,14 @@ iterations = int(sys.argv[4])
 step = float(sys.argv[6])
 EPS = float(sys.argv[5])
 end = int(sys.argv[7])
-
+data = data.copy(order='C')
 for m in range(0, iterations):
     print("Iteration=", m)
     epsilon = EPS    
     for j in range(0, end):
         # build info reinitialized
         t0 = time.time()
+        print("flags=", data.flags) 
         insertionDS = rhfs.rhf_stream(data, T, H, N_init_pts) 
         scores = rhfs.anomaly_score_ids(insertionDS, T, N)
         t1 = time.time()
