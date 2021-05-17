@@ -9,7 +9,6 @@ import scipy.io as sio
 import scipy.stats as sstats
 import random
 import numpy as np
-import anomaly_score as a_s
 import rhf_stream as rhfs
 import mat73
 import utils
@@ -39,7 +38,6 @@ for m in range(0, iterations):
     for j in range(0, end):
         # build info reinitialized
         t0 = time.time()
-        print("flags=", data.flags) 
         insertionDS = rhfs.rhf_stream(data, T, H, N_init_pts) 
         scores = rhfs.anomaly_score_ids(insertionDS, T, N)
         t1 = time.time()
