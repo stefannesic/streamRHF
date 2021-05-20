@@ -95,47 +95,6 @@ cpdef rhf_stream(float[:,::1] data, int t, int h, int N_init_pts):
            
     return insertionDS
 
-# construction of a random histogram forest
-cpdef test_insert(float[:,::1] data=np.asarray([[4,3],[9,3],[4.5,4.1],[3,4]], dtype=np.float32), int t=1, int h=2, int N_init_pts=3):
-    
-    np.set_printoptions(threshold=np.inf)
-    cdef int n = data.shape[0], d = data.shape[1]
-    cdef int W_MAX = 5
-    cdef Py_ssize_t i, j
-    # moments = trees * nodes * attributes * card({M1, M2, M3, M4, n})
-    cdef float[:,:,:,:] moments = np.zeros([t, (2**h)-1, d, 6], dtype=np.float32)
-    cdef Split splits = Split(t, h, d)
-    # create secondary data structure for insertion algorithm
-    cdef Leaves insertionDS = Leaves(t, h, W_MAX)
-    cdef float[:] kurtosis_arr = np.empty([d], np.float32)
-
-    # test data on splits and leaves
-    splits.splits[0][0] = 1
-    splits.splits[0][2] = 2
-    splits.attributes[0][0] = 0
-    splits.attributes[0][2] = 1
-    splits.values[0][0] = 4
-    splits.values[0][2] = 4
-    
-    insertionDS.counters[0][0] = 1
-    insertionDS.counters[0][2] = 1
-    insertionDS.counters[0][3] = 1
-    insertionDS.table[0][0][0] = 0
-    insertionDS.table[0][2][0] = 1
-    insertionDS.table[0][3][0] = 2
-    print("insertionDS before=", np.asarray(insertionDS.table[0]))
-    # calculate t trees in global index variable
-    for i in range(t):
-        print("i=", i)
-        for j in range(N_init_pts, n):
-            insert(data, moments[0], splits, h, insertionDS, kurtosis_arr, j, t_id=i)
-    
-    print("insertionDS after=", np.asarray(insertionDS.table[0]))
-   
-    return insertionDS
-
-
-
 cdef void rht_stream(float[:,::1] data, int[:,:] indexes, Leaves insertionDS, Split split_info, 
                      float[:,:, :] moments, float[:] kurtosis_arr, int H, int N_init_pts, int t_id):
     cdef int i, N = data.shape[0]
