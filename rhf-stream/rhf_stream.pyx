@@ -318,14 +318,14 @@ cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int 
         new_kurtosis_sum = kurtosis_sum_ids(data, moments[nodeID], new_kurtosis_vals, i) 
         #print("new_kurtosis_sum=", new_kurtosis_sum)
         # analyze kurtosis for rebuild
-         
+        ''' 
         # new probability vs. the previously stored probability of splitting on a 
         for j in range(0, old_kurtosis_vals.size):
             # delta_p = old_p - new_p = -new_p + old_p
             # ugly to save on data structures
             new_kurtosis_vals[j] = -1 * (new_kurtosis_vals[j] / new_kurtosis_sum)
             new_kurtosis_vals[j] += (old_kurtosis_vals[j] / old_kurtosis_sum)
-        
+        '''
         if data[i][split_a] <= split_a_val:
             nodeID = nodeID*2 + 1
         else:
