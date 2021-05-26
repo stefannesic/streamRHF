@@ -160,7 +160,6 @@ cdef void rht(float[:,::1] data, int[:] indexes, Leaves insertionDS, Split split
             rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, start, split-1, nd+1, H, d, nodeID=2*nodeID+1, t_id=t_id)
             rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, split, end, nd+1, H, d, nodeID=2*nodeID+2, t_id=t_id)
 
-
 cdef (int, float) get_attribute(float[:,::1] data, int[:] indexes, Py_ssize_t start, Py_ssize_t end, float ks, float[:] kurt, int d):
     cdef Py_ssize_t i, a = -1, data_index
     cdef float a_val, a_min, a_max, temp, r, cumul = 0
@@ -285,11 +284,12 @@ cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int 
     cdef float[:] split_ks = split_info.kurtosis_sum[t_id]
     # subtree and rebuilds
     cdef Py_ssize_t j, k, l, start_index, end_index, total_counter  
-    cdef int[:] temp, counters
+    cdef int[::1] temp
+    cdef int[:]  counters
     cdef int[:,:] table
     cdef float delta_p 
     # while leaf node isn't reached
- 
+     
     while nodeID < (2**H)-1 and split_splits[nodeID] != 0:      
         split_a = split_attributes[nodeID]
         split_a_val = split_vals[nodeID]
@@ -306,6 +306,7 @@ cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int 
             # ugly to save on data structures
             delta_p = (new_kurtosis_vals[j] / new_kurtosis_sum) - (old_kurtosis_vals[j] / old_kurtosis_sum)
             if fabs(delta_p) >= 1 - eps:
+                
                 # SHOULD IT BE >= and <= ???
                 if (split_a != j and delta_p > 0) or (split_a == j and delta_p < 0):  
                     # rebuild tree from current nodeID
@@ -356,19 +357,15 @@ cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int 
         leaf_index = leaf_index - ((2**H) - 1)
        
         # insert the leaf  
+        table = insertionDS.table[t_id]
         counter = insertionDS.counters[t_id][leaf_index]
         insertionDS.table[t_id][leaf_index][counter] = i
         # store all elements in leaf in a temporary variable
         temp = insertionDS.table[t_id, leaf_index, :counter+1].copy()       
         # reset counter to 0
         insertionDS.counters[t_id][leaf_index] = 0
-        #reset leaf to elems to -1
-        for j in range(0, counter+1):
-            insertionDS.table[t_id][leaf_index][j] = -1
-        
         # create new indexes with leaf elements
-        new_indexes = np.empty([counter+1], dtype=np.intc)
-        new_indexes[:] = temp   
+        new_indexes = temp   
         # fill new_indexes with indexes found in the leaf that is being split
         rht(data, new_indexes, insertionDS, split_info, moments, new_kurtosis_vals, start=0, end=counter, nd=nd, H=H, d=d, nodeID=nodeID, t_id=t_id)
 
