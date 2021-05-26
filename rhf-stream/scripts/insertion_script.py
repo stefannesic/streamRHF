@@ -13,6 +13,9 @@ import rhf_stream as rhfs
 import mat73
 import utils
 
+#sys.stdout = open('out.log', 'w')
+#sys.stderr = sys.stdout
+
 if len(sys.argv) < 8:
     print("Command: python insertion_script.py [dataset] [T] [H] [iterations] [EPS] [step] [end]")
     quit()
@@ -36,9 +39,10 @@ for m in range(0, iterations):
     print("Iteration=", m)
     epsilon = EPS    
     for j in range(0, end):
+        print("EPS=", epsilon)
         # build info reinitialized
         t0 = time.time()
-        insertionDS = rhfs.rhf_stream(data, T, H, N_init_pts) 
+        insertionDS = rhfs.rhf_stream(data, T, H, N_init_pts, epsilon) 
         scores = rhfs.anomaly_score_ids(insertionDS, T, N)
         t1 = time.time()
         print("AP=", average_precision_score(labels, scores))

@@ -1,5 +1,5 @@
 from my_imports import np, random, time
-from libc.math cimport log
+from libc.math cimport log, fabs
 
 cdef class Split:
     cdef int[:,:] splits
@@ -71,7 +71,7 @@ cpdef anomaly_score_ids(Leaves insertionDS, Py_ssize_t t, int n):
 
  
 # construction of a random histogram forest
-cpdef rhf_stream(float[:,::1] data, int t, int h, int N_init_pts):
+cpdef rhf_stream(float[:,::1] data, int t, int h, int N_init_pts, float eps):
     cdef int n = data.shape[0], d = data.shape[1]
     cdef int W_MAX = n
     cdef Py_ssize_t i
@@ -85,6 +85,7 @@ cpdef rhf_stream(float[:,::1] data, int t, int h, int N_init_pts):
     # create secondary data structure for insertion algorithm
     cdef Leaves insertionDS = Leaves(t, h, W_MAX)
     cdef float[::1] kurtosis_arr = np.empty([d], np.float32)
+    cdef int[::1] new_indexes = np.empty([W_MAX], np.intc)
     # calculate t trees in global index variable
     for i in range(t):
         print("i=", i)
@@ -92,13 +93,14 @@ cpdef rhf_stream(float[:,::1] data, int t, int h, int N_init_pts):
         index_range = np.arange(0, N_init_pts, dtype=np.intc)
         indexes[i] = index_range
         rht_stream(data=data, indexes=indexes[i], insertionDS=insertionDS, split_info=splits, 
-                   moments=moments[i], kurtosis_arr=kurtosis_arr,
-                   H=h, N_init_pts=N_init_pts, t_id=i) 
+                   moments=moments[i], kurtosis_arr=kurtosis_arr, new_indexes=new_indexes,
+                   H=h, N_init_pts=N_init_pts, t_id=i, eps=eps) 
            
     return insertionDS
 
 cdef void rht_stream(float[:,::1] data, int[:] indexes, Leaves insertionDS, Split split_info, 
-                     float[:,:,:] moments, float[::1] kurtosis_arr, int H, int N_init_pts, int t_id):
+                     float[:,:,:] moments, float[::1] kurtosis_arr, int[::1] new_indexes,
+                     int H, int N_init_pts, int t_id, float eps):
     cdef int i, N = data.shape[0]
     # simulating real-time (except trees constructed one by one) 
     # construct initial tree with batch algorithm on the first N points
@@ -109,7 +111,7 @@ cdef void rht_stream(float[:,::1] data, int[:] indexes, Leaves insertionDS, Spli
     # update existing tree
      
     for i in range(N_init_pts, N):
-        insert(data, moments, split_info, H, insertionDS, kurtosis_arr, i, t_id)
+        insert(data, moments, split_info, H, insertionDS, kurtosis_arr, new_indexes, i, t_id, eps)
     
     t1 = time.time() 
 
@@ -265,7 +267,8 @@ cdef void fill_leaf(int[:] indexes, Leaves insertionDS, int nodeID, int nd, int 
         insertionDS.counters[t_id][leaf_index] += 1
 
 # inserts new data point in leaf
-cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int H, Leaves insertionDS, float[::1] new_kurtosis_vals, Py_ssize_t i, int t_id):
+cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int H, Leaves insertionDS, float[::1] new_kurtosis_vals, 
+                 int[::1] new_indexes, Py_ssize_t i, int t_id, float eps):
     # analyze non leaf node until x is inserted
     # if a non leaf node kurtosis changes, recalculate split
     # start at root node
@@ -280,10 +283,11 @@ cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int 
     cdef int[:] split_splits = split_info.splits[t_id]
     cdef float[:,:] split_kvals = split_info.kurtosis_vals[t_id]
     cdef float[:] split_ks = split_info.kurtosis_sum[t_id]
-    # subtree
-    cdef Py_ssize_t j 
-    cdef int[:] temp
-    cdef int[:] subtree_indexes
+    # subtree and rebuilds
+    cdef Py_ssize_t j, k, l, start_index, end_index, total_counter  
+    cdef int[:] temp, counters
+    cdef int[:,:] table
+    cdef float delta_p 
     # while leaf node isn't reached
  
     while nodeID < (2**H)-1 and split_splits[nodeID] != 0:      
@@ -295,14 +299,36 @@ cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int 
         old_kurtosis_sum = split_ks[nodeID]
         new_kurtosis_sum = kurtosis_sum_ids(data, moments[nodeID], new_kurtosis_vals, i) 
         # analyze kurtosis for rebuild
-         
+          
         # new probability vs. the previously stored probability of splitting on a 
         for j in range(0, d):
             # delta_p = old_p - new_p = -new_p + old_p
             # ugly to save on data structures
-            new_kurtosis_vals[j] = -1 * (new_kurtosis_vals[j] / new_kurtosis_sum)
-            new_kurtosis_vals[j] += (old_kurtosis_vals[j] / old_kurtosis_sum)
-        
+            delta_p = (new_kurtosis_vals[j] / new_kurtosis_sum) - (old_kurtosis_vals[j] / old_kurtosis_sum)
+            if fabs(delta_p) >= 1 - eps:
+                # SHOULD IT BE >= and <= ???
+                if (split_a != j and delta_p > 0) or (split_a == j and delta_p < 0):  
+                    # rebuild tree from current nodeID
+                    # 1) collect leaf values and create new indexes
+                    start_index = (2**(H - nd) * (nodeID + 1)) - 1 - (2**H - 1)
+                    end_index = (2**(H - nd)) - 1 + start_index
+                    total_counter = 0
+                    counters = insertionDS.counters[t_id]
+                    table = insertionDS.table[t_id]
+                    for k in range(start_index, end_index+1):
+                        counter = counters[k]
+                        for l in range(0, counter):
+                            new_indexes[total_counter + l] = table[k][l] 
+                        total_counter += counter
+                        # reset counter to zero
+                        counters[k] = 0
+                    # add also point to insert
+                    new_indexes[total_counter] = i    
+                    rht(data, new_indexes, insertionDS, split_info, moments, new_kurtosis_vals, 
+                        start=0, end=total_counter, nd=nd, H=H, d=d, nodeID=nodeID, t_id=t_id)
+                    # tree rebuilt with inserted point => STOP
+                    return
+             
         if data[i][split_a] <= split_a_val:
             nodeID = nodeID*2 + 1
         else:
@@ -341,10 +367,10 @@ cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int 
             insertionDS.table[t_id][leaf_index][j] = -1
         
         # create new indexes with leaf elements
-        subtree_indexes = np.empty([counter+1], dtype=np.intc)
-        subtree_indexes = temp   
-        # fill subtree_indexes with indexes found in the leaf that is being split
-        rht(data, subtree_indexes, insertionDS, split_info, moments, new_kurtosis_vals, start=0, end=counter, nd=nd, H=H, d=d, nodeID=nodeID, t_id=t_id)
+        new_indexes = np.empty([counter+1], dtype=np.intc)
+        new_indexes[:] = temp   
+        # fill new_indexes with indexes found in the leaf that is being split
+        rht(data, new_indexes, insertionDS, split_info, moments, new_kurtosis_vals, start=0, end=counter, nd=nd, H=H, d=d, nodeID=nodeID, t_id=t_id)
 
 cdef float kurtosis_sum_ids(float[:,::1] data, float[:,:] moments, float[::1] kurtosis_arr, Py_ssize_t i):
     cdef Py_ssize_t d = data.shape[1], a
