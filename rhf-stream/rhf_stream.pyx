@@ -1,6 +1,6 @@
-from my_imports import np, random, time
+from my_imports import np, random
+import timeit
 from libc.math cimport log, fabs
-
 cdef class Split:
     cdef int[:,:] splits
     cdef int[:,:] attributes
@@ -72,9 +72,9 @@ cpdef anomaly_score_ids(Leaves insertionDS, Py_ssize_t t, int n):
  
 # construction of a random histogram forest
 cpdef rhf_stream(float[:,::1] data, int t, int h, int N_init_pts, float eps):
-    cdef int n = data.shape[0], d = data.shape[1]
+    cdef Py_ssize_t i, j, n = data.shape[0], d = data.shape[1]
     cdef int W_MAX = n
-    cdef Py_ssize_t i
+    cdef float t0, t1
     cdef int[:] index_range
     # create an empty forest of t trees each with n x 3 
     # 2 = (index in X, number of elems in leaf)
@@ -85,37 +85,30 @@ cpdef rhf_stream(float[:,::1] data, int t, int h, int N_init_pts, float eps):
     # create secondary data structure for insertion algorithm
     cdef Leaves insertionDS = Leaves(t, h, W_MAX)
     cdef float[::1] kurtosis_arr = np.empty([d], np.float32)
+
     cdef int[::1] new_indexes = np.empty([W_MAX], np.intc)
-    # calculate t trees in global index variable
+    # intialize t trees
     for i in range(t):
-        print("i=", i)
+        #print("i=", i)
         # intialize dataset.index
         index_range = np.arange(0, N_init_pts, dtype=np.intc)
         indexes[i] = index_range
-        rht_stream(data=data, indexes=indexes[i], insertionDS=insertionDS, split_info=splits, 
-                   moments=moments[i], kurtosis_arr=kurtosis_arr, new_indexes=new_indexes,
-                   H=h, N_init_pts=N_init_pts, t_id=i, eps=eps) 
-           
-    return insertionDS
 
-cdef void rht_stream(float[:,::1] data, int[:] indexes, Leaves insertionDS, Split split_info, 
-                     float[:,:,:] moments, float[::1] kurtosis_arr, int[::1] new_indexes,
-                     int H, int N_init_pts, int t_id, float eps):
-    cdef int i, N = data.shape[0]
-    # simulating real-time (except trees constructed one by one) 
-    # construct initial tree with batch algorithm on the first N points
-    cdef int d = data.shape[1]
-    rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, start=0, end=N_init_pts-1, nd=0, H=H, d=d, nodeID=0, t_id=t_id) 
-     
-    t0 = time.time()
-    # update existing tree
-     
-    for i in range(N_init_pts, N):
-        insert(data, moments, split_info, H, insertionDS, kurtosis_arr, new_indexes, i, t_id, eps)
-    
-    t1 = time.time() 
+        rht(data, indexes[i], insertionDS, splits, moments[i], kurtosis_arr, start=0, end=N_init_pts-1, nd=0, H=h, d=d, nodeID=0, t_id=i) 
+    print("Forest initialized...") 
+    # insert each instance in all of the trees
+    t0 = timeit.default_timer()
+ 
+    for i in range(N_init_pts, n):
+        #print("Inserting point ", i)
+        for j in range(t):
+            insert(data, moments[j], splits, h, insertionDS, kurtosis_arr, new_indexes, i, j, eps)
+
+    t1 = timeit.default_timer()
 
     print("Total time for insertions=", t1 - t0)
+          
+    return insertionDS
 
 # sort indexes according to split
 cdef int sort(float[:,::1] data, int[:] indexes, int start, int end, Py_ssize_t a, float a_val):
@@ -305,7 +298,9 @@ cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int 
         for j in range(0, d):
             # delta_p = old_p - new_p = -new_p + old_p
             # ugly to save on data structures
+            
             delta_p = (new_kurtosis_vals[j] / new_kurtosis_sum) - (old_kurtosis_vals[j] / old_kurtosis_sum)
+                
             if fabs(delta_p) >= 1 - eps:
                 
                 # SHOULD IT BE >= and <= ???
