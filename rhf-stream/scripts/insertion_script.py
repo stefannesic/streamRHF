@@ -15,24 +15,25 @@ import utils
 #sys.stdout = open('out.log', 'w')
 #sys.stderr = sys.stdout
 
-if len(sys.argv) < 8:
-    print("Command: python insertion_script.py [dataset] [T] [H] [iterations] [EPS] [step] [end]")
+if len(sys.argv) < 9:
+    print("Command: python3 insertion_script.py [dataset] [T] [H] [iterations] [EPS] [step] [end] [initsamplepercent]")
     quit()
 
 fname = str(sys.argv[1])
 
 data, labels = utils.load_dataset(fname)
 # N is 1% of the dataset 
-N_init_pts = int(round(data.shape[0] * 0.01))
-
 T = int(sys.argv[2])
 H = int(sys.argv[3])
 N = data.shape[0]
-print("N_init_pts=", N_init_pts)
 iterations = int(sys.argv[4])
 step = float(sys.argv[6])
 EPS = float(sys.argv[5])
 end = int(sys.argv[7])
+init = int(sys.argv[8])
+N_init_pts = int(round(data.shape[0] * (init / 100)))
+print("N_init_pts=", N_init_pts)
+
 data = data.copy(order='C')
 for m in range(0, iterations):
     print("Iteration=", m)
