@@ -18,18 +18,21 @@ np.set_printoptions(threshold=sys.maxsize)
 H = 5
 T = 100
 
-if len(sys.argv) < 2:
-     print("Command: python d_v_t_script.py [dataset]")
+if len(sys.argv) <3:
+     print("Command: python windowed_batch_script.py [dataset] [initalsamplepercent]")
      quit()
 
 fname = str(sys.argv[1])
-
+init = int(sys.argv[2])
 data, labels = utils.load_dataset(fname)
 N = data.shape[0]
+
+init = int(round(data.shape[0] * (init / 100)))
+
 data = data.copy(order='C')
 for i in range(0,10):
     t0 = time.time()
-    scores = rhfs.rhf(data, T, H)
+    scores = rhfs.rhf_windowed(data, T, H, init)
     t1 = time.time()
     AP = average_precision_score(labels, scores)
     print("Total time for rhf-cython (train) = ", t1-t0)
