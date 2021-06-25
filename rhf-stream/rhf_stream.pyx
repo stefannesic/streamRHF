@@ -79,7 +79,7 @@ cpdef rhf_windowed(float[:,::1] data, int t, int h, int N_init_pts):
     for i in range(N_init_pts, n):
         # score point inserted in forest
         for j in range(t):
-             leaf_indexes[j] = find_leaf(data, splits, h, insertionDS, i, t_id=j)
+             leaf_indexes[j] = find_leaf(data, splits, h, i, t_id=j)
 
         scores[i] = anomaly_score_ids_incr(leaf_indexes, insertionDS, t, N_init_pts)
         # rebuild model every N_init_pts 
@@ -454,7 +454,7 @@ cdef int insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int H
         return leaf_index
 
 # find leaf
-cdef int find_leaf(float[:,::1] data, Split split_info, int H, Leaves insertionDS, Py_ssize_t i, int t_id):
+cdef int find_leaf(float[:,::1] data, Split split_info, int H, Py_ssize_t i, int t_id):
     # analyze non leaf node until x is inserted
     # if a non leaf node kurtosis changes, recalculate split
     # start at root node
@@ -464,8 +464,6 @@ cdef int find_leaf(float[:,::1] data, Split split_info, int H, Leaves insertionD
     cdef int[:] split_attributes = split_info.attributes[t_id]
     cdef float[:] split_vals = split_info.values[t_id]
     cdef int[:] split_splits = split_info.splits[t_id]
-    cdef float[:,:] split_kvals = split_info.kurtosis_vals[t_id]
-    cdef float[:] split_ks = split_info.kurtosis_sum[t_id]
     
     # while leaf node isn't reached
     
