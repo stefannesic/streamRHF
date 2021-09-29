@@ -15,8 +15,8 @@ import utils
 #sys.stdout = open('out.log', 'w')
 #sys.stderr = sys.stdout
 
-if len(sys.argv) < 6:
-    print("Command: python3 insertion_script.py [dataset] [T] [H] [iterations] [initsamplesize]")
+if len(sys.argv) < 8:
+    print("Command: python3 insertion_script.py [dataset] [T] [H] [iterations] [initsamplepercent] [shuffled?] [constant?]")
     quit()
 
 fname = str(sys.argv[1])
@@ -27,7 +27,14 @@ T = int(sys.argv[2])
 H = int(sys.argv[3])
 N = data.shape[0]
 iterations = int(sys.argv[4])
-N_init_pts = int(sys.argv[5])
+init = int(sys.argv[5])
+shuff = int(sys.argv[6])
+const = int(sys.argv[7])
+
+if const == 0:
+    N_init_pts = int(round(data.shape[0] * (init / 100)))
+else:
+    N_init_pts = init
 print("N_init_pts=", N_init_pts)
 
 data = np.array(data, dtype='float64')
@@ -41,8 +48,9 @@ for m in range(0, iterations):
     t1 = time.time()
     print("AP=", average_precision_score(labels, scores))
     print("time (whole)=", t1 - t0)
-    data, labels = utils.load_dataset(fname)
-    data = np.array(data, dtype='float64')
-    data = data.copy(order='C')
+    if shuff == 1:
+        data, labels = utils.load_dataset(fname)
+        data = np.array(data, dtype='float64')
+        data = data.copy(order='C')
 
 
