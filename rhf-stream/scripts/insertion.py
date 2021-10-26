@@ -53,7 +53,7 @@ for m in range(0, iterations):
     print("AP=", average_precision_score(labels, scores))
     print("time (whole)=", t1 - t0)
     if shuff == 1:
-        data, labels = utils.load_dataset(fname)
+        data, labels = utils.load_dataset_shuffled(fname)
         data = np.array(data, dtype='float64')
         data = data.copy(order='C')
 
