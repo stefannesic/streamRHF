@@ -140,8 +140,10 @@ cpdef rhf_stream(double[:,::1] data, int t, int h, int N_init_pts):
     # create an empty forest of t trees each with n x 3 
     # 2 = (index in X, number of elems in leaf)
     cdef int[:,:] indexes = np.empty([t, N_init_pts], dtype=np.intc)
-    # r-values for each Node and each tree
-    cdef double[:,::1] r_values = np.empty([t, (2**h)-1], dtype=np.float64)
+    # two r-values for each Node and each tree
+    # 0th r-value for attribute selection 
+    # 1st r-value for attribute value selection 
+    cdef double[:,:,::1] r_values = np.empty([t, (2**h)-1, 2], dtype=np.float64)
     # moments = trees * nodes * attributes * card({M1, M2, M3, M4, n})
     cdef double[:,:,:,:] moments = np.zeros([t, (2**h)-1, d, 6], dtype=np.float64)
     cdef Split splits = Split(t, h, d)
@@ -154,8 +156,17 @@ cpdef rhf_stream(double[:,::1] data, int t, int h, int N_init_pts):
     for i in range(t):
         # initial r-values for i-th tree
         for j in range((2**h) - 1):
-            r_values[i][j] = random.uniform(0, 1)     
-         
+            r_values[i][j][0] = random.uniform(0, 1)     
+            r_values[i][j][1] = random.uniform(0, 1)   
+
+            # neither r_value can be 0
+            # so keep selecting until it isn't 
+            while r_values[i][j][0] == 0:
+                r_values[i][j][0] = random.uniform(0, 1)     
+
+            while r_values[i][j][1] == 0:
+                r_values[i][j][1] = random.uniform(0, 1)   
+
         # intialize dataset.index
         index_range = np.arange(0, N_init_pts, dtype=np.intc)
         indexes[i] = index_range
@@ -201,7 +212,7 @@ cdef int sort(double[:,::1] data, int[:] indexes, int start, int end, Py_ssize_t
          
 cdef int rht(double[:,::1] data, int[:] indexes, Leaves insertionDS, Split split_info, double[:,:,:] moments, 
              double[:] kurtosis_arr, int start, int end, int nd, int H, int d, Py_ssize_t nodeID=0, 
-             Py_ssize_t t_id=0, double[:] r_values=None, double[::1] insertion_pt = None):
+             Py_ssize_t t_id=0, double[:,:] r_values=None, double[::1] insertion_pt = None):
     cdef int ls, a, split, insertion_leaf = -1
     cdef double ks, a_val, r 
     if (end == start or nd >= H):
@@ -215,16 +226,13 @@ cdef int rht(double[:,::1] data, int[:] indexes, Leaves insertionDS, Split split
             insertion_leaf = fill_leaf(indexes, insertionDS, nodeID, nd, H, start, end, 1, t_id) 
         else: # split
             if r_values != None:
-                r = r_values[nodeID]
+                r_a = r_values[nodeID][0]
+                r_a_val = r_values[nodeID][1]
             else:
-                r = -1
+                r_a = -1
+                r_a_val = -1
 
-            a, a_val, r = get_attribute(data, indexes, start, end, ks, kurtosis_arr, d, r)
-            
-            # if different r is chosen, update
-            # otherwise, nothing will change
-            if r_values != None: 
-                r_values[nodeID] = r
+            a, a_val, r_a, r_a_val = get_attribute(data, indexes, start, end, ks, kurtosis_arr, d, r_a, r_a_val)
             
             # sort indexes
             split = sort(data, indexes, start, end, a, a_val)
@@ -254,54 +262,55 @@ cdef int rht(double[:,::1] data, int[:] indexes, Leaves insertionDS, Split split
               
     return insertion_leaf
 
-cdef (int, double, double) get_attribute(double[:,::1] data, int[:] indexes, Py_ssize_t start, Py_ssize_t end, double ks, double[:] kurt, int d, double r=-1):
+cdef (int, double, double, double) get_attribute(double[:,::1] data, int[:] indexes, Py_ssize_t start, Py_ssize_t end, 
+                                        double ks, double[:] kurt, int d, double r_a=-1, double r_a_val=-1):
     cdef Py_ssize_t i, a = -1, data_index
     cdef double a_val, a_min, a_max, temp, cumul = 0
    
-    # if r is not set immediately choose one 
-    if r == -1:
-        r = random.uniform(0, ks)
+    # if r_a is not set immediately choose one 
+    if r_a == -1:
+        # while r_a is 0, choose new one 
+        r_a = random.uniform(0, ks)
+        while r_a == 0:
+            r_a = random.uniform(0, ks)
     else:
-        r = r * ks
+        r_a = r_a * ks
 
-    # keep choosing a different r until a_min != a_max
-    # useful if kurt(a0) = 0 and r = 0... stuck in loop!
-    while True:
-        # cumulative sum
-        for i in range(0, d):
-            temp = kurt[i]
-            kurt[i] += cumul 
-            if i == 0:
-                if r <= kurt[i]:
-                    a = i
-            else:
-                if r > kurt[i-1] and r <= kurt[i]:
-                    a = i 
-            cumul += temp
+    # cumulative sum to determine attribute, a, based on r_a
+    for i in range(0, d):
+        temp = kurt[i]
+        kurt[i] += cumul 
+        if i == 0:
+            if r_a <= kurt[i]:
+                a = i
+        else:
+            if r_a > kurt[i-1] and r_a <= kurt[i]:
+                a = i 
+        cumul += temp
 
-        # get min and max
-        data_index = indexes[start]
-        a_min = data[data_index][a]
-        a_max = a_min
+    # get min and max intervals of attribute 
+    data_index = indexes[start]
+    a_min = data[data_index][a]
+    a_max = a_min
 
-        for i in range(start, end+1):
-                temp = data[indexes[i]][a]
-                if a_min > temp:
-                    a_min = temp
-                elif a_max < temp:
-                    a_max = temp
-        if a_min != a_max: 
-            break 
-        
-        # if you reached this point r is not good, choose another
-        r = random.uniform(0, ks)
-      
-    a_val = random.uniform(a_min, a_max)
-    
-    while a_val == a_min or a_val == a_max:
+    for i in range(start, end+1):
+            temp = data[indexes[i]][a]
+            if a_min > temp:
+                a_min = temp
+            elif a_max < temp:
+                a_max = temp
+    # if the seed for the a_val is not set
+    # calculate it as usual
+    if r_a_val == -1:
         a_val = random.uniform(a_min, a_max)
-    
-    return a, a_val, r / ks 
+        # the a_val cannot be an upper or lower bound
+        # * random.uniform already excludes the upper bound   
+        while a_val == a_min:
+            a_val = random.uniform(a_min, a_max)
+    else:
+        a_val = r_a_val * (a_max - a_min) + a_min        
+
+    return a, a_val, r_a / ks, ((a_val - a_min) / (a_max - a_min))
 
 cdef double kurtosis_sum(double[:,::1] data, int[:] indexes, double[:,:] moments, double[:] kurtosis_arr, int start, int end):
     cdef Py_ssize_t d = data.shape[1], a
@@ -371,7 +380,7 @@ cdef int fill_leaf(int[:] indexes, Leaves insertionDS, int nodeID, int nd, int H
 
 # inserts new data point in leaf
 cdef int insert(double[:,::1] data, double[:,:,:] moments, Split split_info, int H, Leaves insertionDS, double[::1] new_kurtosis_vals, 
-                 int[::1] new_indexes, Py_ssize_t i, int t_id, double[::1] r_values):
+                 int[::1] new_indexes, Py_ssize_t i, int t_id, double[:,::1] r_values):
     # analyze non leaf node until x is inserted
     # if a non leaf node kurtosis changes, recalculate split
     # start at root node
@@ -401,7 +410,7 @@ cdef int insert(double[:,::1] data, double[:,:,:] moments, Split split_info, int
         # does the splitting attribute change?
         
         # find a corresponding to r value 
-        r = r_values[nodeID] * new_kurtosis_sum
+        r = r_values[nodeID][0] * new_kurtosis_sum
         cumul = 0
         a = -1
         for j in range(0, d):
