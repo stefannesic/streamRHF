@@ -1,9 +1,11 @@
 from my_imports import np, rht, ins, time, Node
 
-def rht_stream(data, N, counter):
+def rht_stream(data, int N, int counter):
+    cdef float t0, t1
+    cdef int size
     # simulating real-time (except trees constructed one by one) 
     # construct initial tree with batch algorithm on the first N points
-    tree = rht.rht(np.arange(0, N), 0, np.zeros([data.shape[1], 5], dtype=np.float32))
+    tree = rht.rht(np.arange(0, N), 0, np.zeros([data.shape[1], 6], dtype=np.float32))
     print("Initial tree constructed.")
     t0 = time.time()
     size = N
