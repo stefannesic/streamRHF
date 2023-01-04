@@ -11,6 +11,7 @@ ext_modules=[
 	Extension("rhf", ["rhf.pyx"]),
     Extension("insert", ["insert.pyx"]),
 	Extension("Node", ["Node.pyx"]),
+    Extension("rhf_stream", ["rhf_stream.pyx"])
 ]
 
 setup(
