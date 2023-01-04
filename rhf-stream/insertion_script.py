@@ -23,7 +23,7 @@ labels = mat_contents['y']
 data = data.astype('float32')
 
 # N is 1% of the dataset 
-N = data.shape[0] * 0.01
+N = int(round(data.shape[0] * 0.01))
 
 T = int(sys.argv[3])
 H = int(sys.argv[4])
