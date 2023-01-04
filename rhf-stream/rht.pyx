@@ -45,7 +45,6 @@ def rht(float[:,:] data, int[:,:] indexes, insertionDS, split_info, float[:,:,:]
             rht(data, indexes, insertionDS, split_info, moments, start, split-1, nd+1, H, nodeID=2*nodeID+1)
             rht(data, indexes, insertionDS, split_info, moments, split, end, nd+1, H, nodeID=2*nodeID+2)
            
-
 def fill_leaf(int[:,:] indexes, insertionDS, int nodeID, int nd, int H, int start, int end, int ls = 0):
     cdef int i, leaf_index
     # leaf size is not set, calculate it.
@@ -53,10 +52,6 @@ def fill_leaf(int[:,:] indexes, insertionDS, int nodeID, int nd, int H, int star
         ls = end - start + 1
 
     # calculate index of insertionDS
-    print("start=", start)
-    print("end=", end)
-    print("nd=", nd)
-    print("nodeID", nodeID) 
     if nodeID >= (2**H - 1) : # leaf is at max depth
         leaf_index = nodeID
     else:
