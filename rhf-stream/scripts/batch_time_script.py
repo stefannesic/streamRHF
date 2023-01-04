@@ -26,6 +26,7 @@ fname = str(sys.argv[1])
 
 data, labels = utils.load_dataset(fname)
 N = data.shape[0]
+data = data.copy(order='C')
 for i in range(0,10):
     t0 = time.time()
     insertionDS = rhfs.rhf(data, T, H)
