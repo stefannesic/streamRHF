@@ -9,14 +9,11 @@ def rht_stream(data, N, counter):
     size = N
     # update existing tree
     for i in range(N, data.shape[0]):
-        #tbi = time.time()
         # on first iteration, store each new point inserted
         if counter == 0:
             Node.data_complete = np.append(Node.data_complete, np.array([data[i]], np.float32), axis=0)
         tree = ins.insert(tree, np.array([size]))
         size = size + 1
-        #tai = time.time()
-        #print(f'insertion #{i}')
     t1 = time.time()
 
     print("Total time for insertions = ", t1-t0)
