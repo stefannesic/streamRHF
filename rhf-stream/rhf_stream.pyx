@@ -104,18 +104,12 @@ cdef void rht_stream(float[:,::1] data, int[:,:] indexes, Leaves insertionDS, Sp
     # construct initial tree with batch algorithm on the first N points
     cdef int d = data.shape[1]
     rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, start=0, end=N_init_pts-1, nd=0, H=H, d=d, nodeID=0, t_id=t_id) 
-    #print("before insertion_ds=", np.asarray(insertionDS.table[t_id]))
-    #print("splits.attributes=", np.asarray(split_info.attributes[t_id]))
-    #print("splits.values=", np.asarray(split_info.values[t_id]))
      
     t0 = time.time()
     # update existing tree
      
     for i in range(N_init_pts, N):
         insert(data, moments, split_info, H, insertionDS, kurtosis_arr, i, t_id)
-    #print("after insertion_ds=", np.asarray(insertionDS.table[t_id]))
-    #print("splits.attributes=", np.asarray(split_info.attributes[t_id]))
-    #print("splits.values=", np.asarray(split_info.values[t_id]))
     
     t1 = time.time() 
 
@@ -141,30 +135,22 @@ cdef int sort(float[:,::1] data, int[:,:] indexes, int start, int end, Py_ssize_
 cdef void rht(float[:,::1] data, int[:,:] indexes, Leaves insertionDS, Split split_info, float[:,:,:] moments, float[:] kurtosis_arr, int start, int end, int nd, int H, int d, Py_ssize_t nodeID=0, Py_ssize_t t_id=0):
     cdef int ls, a, split
     cdef float ks, a_val 
-    #print("in rhf")
     if (end == start or nd >= H):
         # leaf size
-        #print("in if1")
         fill_leaf(indexes, insertionDS, nodeID, nd, H, start, end, 0, t_id) 
     else:
-        #print("in else1")
         # calculate kurtosis
         ks = kurtosis_sum(data, indexes, moments[nodeID], kurtosis_arr, start, end)
-        #print("survived kurtosis_sum")
         if (ks == 0): # stop if all elems are the same
-            #print("in if2")
             fill_leaf(indexes, insertionDS, nodeID, nd, H, start, end, 1, t_id) 
         else: # split
             # store kurtosis values for insertion
             split_info.kurtosis_vals[t_id][nodeID] = kurtosis_arr
             split_info.kurtosis_sum[t_id][nodeID] = ks
             
-            #print("in else2")
             a, a_val = get_attribute(data, indexes, start, end, ks, kurtosis_arr, d)
-            #print("survived ga")
             # sort indexes
             split = sort(data, indexes, start, end, a, a_val)
-            #print("survived sort")
             # store split info
             split_info.splits[t_id][nodeID] = split
             split_info.attributes[t_id][nodeID] = a
@@ -216,9 +202,6 @@ cdef (int, float) get_attribute(float[:,::1] data, int[:,:] indexes, Py_ssize_t 
 cdef float kurtosis_sum(float[:,::1] data, int[:,:] indexes, float[:,:] moments, float[:] kurtosis_arr, int start, int end):
     cdef Py_ssize_t d = data.shape[1], a
     cdef float ks = 0
-    #print("start=", start)
-    #print("end=", end)
-    #print("d=", d)
     for a in range(0, d): 
         kurtosis_arr[a] = incr_kurtosis(data, indexes, moments[a], start, end, a)
         kurtosis_arr[a] = log(kurtosis_arr[a] + 1)
@@ -299,7 +282,6 @@ cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int 
     cdef int[:] split_splits = split_info.splits[t_id]
     cdef float[:,:] split_kvals = split_info.kurtosis_vals[t_id]
     cdef float[:] split_ks = split_info.kurtosis_sum[t_id]
-    #print("inserting=", i)
     # subtree
     cdef Py_ssize_t j 
     cdef int[:] temp
@@ -311,12 +293,9 @@ cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int 
         split_a_val = split_vals[nodeID]
         
         # calculate new kurtosis
-         
         old_kurtosis_vals = split_kvals[nodeID]
         old_kurtosis_sum = split_ks[nodeID]
-        #print("old_kurtosis_sum=", old_kurtosis_sum)
         new_kurtosis_sum = kurtosis_sum_ids(data, moments[nodeID], new_kurtosis_vals, i) 
-        #print("new_kurtosis_sum=", new_kurtosis_sum)
         # analyze kurtosis for rebuild
          
         # new probability vs. the previously stored probability of splitting on a 
@@ -354,11 +333,9 @@ cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int 
        
         # insert the leaf  
         counter = insertionDS.counters[t_id][leaf_index]
-        #print("counter=", counter)
         insertionDS.table[t_id][leaf_index][counter] = i
         # store all elements in leaf in a temporary variable
         temp = insertionDS.table[t_id, leaf_index, :counter+1].copy()       
-        #print("temp=", np.asarray(temp))
         # reset counter to 0
         insertionDS.counters[t_id][leaf_index] = 0
         #reset leaf to elems to -1
@@ -368,7 +345,6 @@ cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int 
         # create new indexes with leaf elements
         subtree_indexes = np.empty([counter+1, 2], dtype=np.intc)
         subtree_indexes[:,0] = temp   
-        #print("indexes=", np.asarray(subtree_indexes))
         # fill subtree_indexes with indexes found in the leaf that is being split
         rht(data, subtree_indexes, insertionDS, split_info, moments, new_kurtosis_vals, start=0, end=counter, nd=nd, H=H, d=d, nodeID=nodeID, t_id=t_id)
 
@@ -382,11 +358,6 @@ cdef float kurtosis_sum_ids(float[:,::1] data, float[:,:] moments, float[::1] ku
         M3 = moments[a][2]
         M4 = moments[a][3]
         n = moments[a][4]
-        #print("mean=", mean)
-        #print("M2=", M2)
-        #print("M3=", M3)
-        #print("M4=", M4)
-        #print("n=", n) 
         
         x = data[i][a]
         n1 = n
