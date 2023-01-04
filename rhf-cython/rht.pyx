@@ -2,7 +2,6 @@ from my_imports import np, ks_cy, random, ga, Node, Leaf
 
 # Construction of a random histogram tree
 cpdef rht(X, int nd, int h):
-    print("nd=", nd)
     cdef float r, ks, a_val
     cdef int a
     # unique instances

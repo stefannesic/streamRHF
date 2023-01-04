@@ -10,8 +10,7 @@ ext_modules=[
 	Extension("rht", ["rht.pyx"]),
 	Extension("rhf", ["rhf.pyx"]),
 	Extension("Node", ["Node.pyx"]),
-	Extension("Leaf", ["Leaf.pyx"]),
-        Extension("test", ["test.pyx"])
+	Extension("Leaf", ["Leaf.pyx"])
 ]
 
 setup(
