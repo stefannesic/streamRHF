@@ -36,6 +36,6 @@ for i in range(0,10):
     AP = average_precision_score(labels, scores)
 
     t1 = time.time()
-    print(np.asarray(split_info[0].values))
+    #print(np.asarray(split_info[0].values))
     print("Total time for rhf-cython (train) = ", t1-t0)
     print("AP=", AP)
