@@ -1,7 +1,7 @@
 import sys 
 sys.path.insert(1, '../../datasets/forStefan/')
 sys.path.insert(2, '../')
-import timeit 
+import time 
 from sklearn.metrics import average_precision_score
 import math
 import scipy.io as sio
@@ -40,10 +40,10 @@ for m in range(0, iterations):
     for j in range(0, end):
         print("EPS=", epsilon)
         # build info reinitialized
-        t0 = timeit.default_timer()
+        t0 = time.time()
         insertionDS = rhfs.rhf_stream(data, T, H, N_init_pts, epsilon) 
         scores = rhfs.anomaly_score_ids(insertionDS, T, N)
-        t1 = timeit.default_timer()
+        t1 = time.time()
         print("AP=", average_precision_score(labels, scores))
         print("time (whole)=", t1 - t0)
         epsilon = epsilon + step
