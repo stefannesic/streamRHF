@@ -288,8 +288,8 @@ cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int 
     # analyze non leaf node until x is inserted
     # if a non leaf node kurtosis changes, recalculate split
     # start at root node
-    cdef Py_ssize_t nodeID = 0, split_a, leaf_index, counter 
-    cdef int a, nd = 0, d = data.shape[1], ks = 0
+    cdef Py_ssize_t nodeID = 0, split_a, leaf_index, counter, d = data.shape[1] 
+    cdef int a, nd = 0, ks = 0
     cdef float split_a_val, old_kurtosis_sum, new_kurtosis_sum
     cdef float[:] old_kurtosis_vals
     cdef float[:] moments_calc
@@ -318,14 +318,14 @@ cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int 
         new_kurtosis_sum = kurtosis_sum_ids(data, moments[nodeID], new_kurtosis_vals, i) 
         #print("new_kurtosis_sum=", new_kurtosis_sum)
         # analyze kurtosis for rebuild
-        ''' 
+         
         # new probability vs. the previously stored probability of splitting on a 
-        for j in range(0, old_kurtosis_vals.size):
+        for j in range(0, d):
             # delta_p = old_p - new_p = -new_p + old_p
             # ugly to save on data structures
             new_kurtosis_vals[j] = -1 * (new_kurtosis_vals[j] / new_kurtosis_sum)
             new_kurtosis_vals[j] += (old_kurtosis_vals[j] / old_kurtosis_sum)
-        '''
+        
         if data[i][split_a] <= split_a_val:
             nodeID = nodeID*2 + 1
         else:
@@ -366,7 +366,7 @@ cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int 
             insertionDS.table[t_id][leaf_index][j] = -1
         
         # create new indexes with leaf elements
-        subtree_indexes = np.empty([counter+1, 2], dtype=np.intc) - 1
+        subtree_indexes = np.empty([counter+1, 2], dtype=np.intc)
         subtree_indexes[:,0] = temp   
         #print("indexes=", np.asarray(subtree_indexes))
         # fill subtree_indexes with indexes found in the leaf that is being split
