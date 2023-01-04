@@ -40,7 +40,7 @@ for m in range(0, iterations):
         # build info reinitialized
         t0 = time.time()
         insertionDS = rhfs.rhf_stream(data, T, H, N_init_pts) 
-        scores = a_s.anomaly_score_ids(insertionDS, T, N)
+        scores = rhfs.anomaly_score_ids(insertionDS, T, N)
         t1 = time.time()
         print("AP=", average_precision_score(labels, scores))
         print("time (whole)=", t1 - t0)
