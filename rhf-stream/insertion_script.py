@@ -25,16 +25,16 @@ data = data.astype('float32')
 # N is 1% of the dataset 
 N = int(round(data.shape[0] * 0.01))
 
-T = int(sys.argv[3])
-H = int(sys.argv[4])
+T = int(sys.argv[2])
+H = int(sys.argv[3])
 
 print("N=", N)
-iterations = int(sys.argv[5])
-step = float(sys.argv[7])
+iterations = int(sys.argv[4])
+step = float(sys.argv[6])
 for m in range(0, iterations):
     print("Iteration=", m)
-    EPS = float(sys.argv[6])
-    end = int(sys.argv[8])
+    EPS = float(sys.argv[5])
+    end = int(sys.argv[7])
         
 
     for j in range(0, end):
