@@ -1,6 +1,6 @@
 from my_imports import np, rht, ins, time
 
-def rht_stream(float[:,:] data, int[:,:] indexes, insertionDS, split_info, float[:,:, :] moments, int H, int N_init_pts):
+cpdef rht_stream(float[:,:] data, int[:,:] indexes, insertionDS, split_info, float[:,:, :] moments, int H, int N_init_pts):
     # simulating real-time (except trees constructed one by one) 
     # construct initial tree with batch algorithm on the first N points
     cdef int n = data.shape[0]
