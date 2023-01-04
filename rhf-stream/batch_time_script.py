@@ -11,6 +11,7 @@ import rhf
 import anomaly_score as a_s
 import Node
 import sys
+import mat73
 # set the number of trees and max height
 H = 5
 T = 100
