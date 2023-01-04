@@ -14,8 +14,10 @@ def rht_stream(data, N):
     t0 = time.time()
     # update existing tree
     for i in range(N, data.shape[0]):
-        print("i=", i)
+        tbi = time.time()
         tree = ins.insert(tree, np.array([data[i]], np.float32))
+        tai = time.time()
+        print(f'Time for insertion #{i} = {tai-tbi}')
     t1 = time.time()
 
     print("Total time for insertions = ", t1-t0)
