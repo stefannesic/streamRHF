@@ -1,4 +1,12 @@
 from my_imports import np, ik
+from libc.math cimport log
+
+def same_values(float[:] arr):
+    cdef float temp = arr[0]
+    for i in range(1, arr.size):
+        if arr[i] != temp:
+            return False
+    return True 
 
 # sum of log(Kurtosis(X[a] + 1)) of attributes 0 to d inclusive
 def kurtosis_sum(float[:,:] X, moments):
@@ -7,12 +15,14 @@ def kurtosis_sum(float[:,:] X, moments):
     cdef float sum = 0.0
     cdef Py_ssize_t d = X.shape[1]
     cdef float[:] kurt = np.empty([d], np.float32)
+
+    cdef int X_shape = X.shape[0]
     # loop over the transpose matrix in order to analyze by column
     for a in range(0, d):
         try:
-            if (np.max(X[:,a]) != np.min(X[:,a]) or X.shape[0] == 1):
+            if (not(same_values(X[:,a])) or X_shape == 1):
                 kurt[a], moments[a] = ik.incr_kurtosis(X[:,a], moments[a])
-                kurt[a] = np.log(kurt[a] + 1)
+                kurt[a] = log(kurt[a] + 1)
                 sum += kurt[a]
             else:
                 kurt[a] = 0
