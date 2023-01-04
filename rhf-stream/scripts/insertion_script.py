@@ -61,6 +61,13 @@ for m in range(0, iterations):
         print("time (whole)=", t1 - t0)
         print("rebuild info=", Node.rebuild)
         print("insstats =", Node.insstats)
+        print("ksstats---------------------------------------------")
+        print("before if =", Node.ksstats[0])
+        print("1st iteration of for loop=", Node.ksstats[1])
+        print("incremental kurtosis function=", Node.ksstats[2])
+        print("inner for loop time=", Node.ksstats[3])
+        print("outer for loop time=", Node.ksstats[4])
+        print("time to increase ksstats variable=", Node.ksstats[5])
         EPS = EPS + step
 
 
