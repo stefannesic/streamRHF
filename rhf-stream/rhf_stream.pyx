@@ -9,7 +9,7 @@ cpdef rhf_stream(float[:,:] data, int t, int h, int N_init_pts):
     # 2 = (index in X, number of elems in leaf)
     indexes = np.empty([t, N_init_pts, 2], dtype=np.intc)
     # moments = trees * nodes * attributes * card({M1, M2, M3, M4, n})
-    moments = np.zeros([t, (2**h)-1, d, 5], dtype=np.float32)
+    moments = np.zeros([t, (2**h)-1, d, 6], dtype=np.float32)
     splits = np.empty([t], dtype=object)
     # create secondary data structure for insertion algorithm
     insertionDS = np.empty([t], dtype=object)
@@ -125,9 +125,8 @@ cdef void insert(float[:,:] data, float[:,:,:] moments, split_info, int H, inser
     cdef float split_a_val, old_kurtosis_sum, new_kurtosis_sum
     cdef float[:] old_kurtosis_vals
     # THE NP.EMPTY GETS TIME FROM 0.0000001 VS. 0.03
-    cdef float[:] new_kurtosis_vals = np.empty([d], np.float32)
     cdef float[:,:] moments_calc
-    cdef float[:] M2, M3, M4, n
+    cdef float[:] M2, M3, M4, n, new_kurtosis_vals
     
     # while leaf node isn't reached
     while nodeID < (2**H)-1 and split_info.splits[nodeID] != 0:
@@ -144,6 +143,7 @@ cdef void insert(float[:,:] data, float[:,:,:] moments, split_info, int H, inser
         M3 = moments_calc[:,2]
         M4 = moments_calc[:,3]
         n = moments_calc[:,4]
+        new_kurtosis_vals = moments_calc[:,5]
         for a in range(0,d):
             if M4[a] == 0:
                 new_kurtosis_vals[a] = 0
