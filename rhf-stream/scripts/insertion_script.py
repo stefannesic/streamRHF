@@ -43,6 +43,10 @@ for m in range(0, iterations):
         print("EPS=", EPS)
         # build info reinitialized
         Node.rebuild = np.zeros([6])
+        Node.insstats = np.zeros([9])
+        Node.ksstats = np.zeros([6], np.float32)
+        Node.ktime = np.zeros([10])
+
         t0 = time.time()
         forest = rhfs.rhf_stream(data, t=T, h=H, n=N, eps=EPS)
 
@@ -56,6 +60,7 @@ for m in range(0, iterations):
         print("AP=", average_precision_score(labels, scores))
         print("time (whole)=", t1 - t0)
         print("rebuild info=", Node.rebuild)
+        print("insstats =", Node.insstats)
         EPS = EPS + step
 
 
