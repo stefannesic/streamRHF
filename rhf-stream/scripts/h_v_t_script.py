@@ -1,3 +1,7 @@
+import sys 
+sys.path.insert(1, '../../datasets/forStefan/')
+sys.path.insert(2, '../')
+import utils
 from timeit import timeit
 from sklearn.metrics import average_precision_score
 import math
@@ -14,12 +18,9 @@ if len(sys.argv) < 2:
     print("Command: python h_v_t_script.py [dataset]")
     quit()
 
+fname = str(sys.argv[1])
 
-mat_contents = sio.loadmat("../datasets/" + str(sys.argv[1]))
-dataset = mat_contents['X']
-labels = mat_contents['y']
-
-dataset = dataset.astype('float32')
+dataset, labels = utils.load_dataset(fname)
 
 Node.data_complete = dataset
 for j in range(1, 11):
