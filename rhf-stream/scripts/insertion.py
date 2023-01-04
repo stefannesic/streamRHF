@@ -21,16 +21,20 @@ if len(sys.argv) < 8:
 
 fname = str(sys.argv[1])
 
-data, labels = utils.load_dataset(fname)
 # N is 1% of the dataset 
 T = int(sys.argv[2])
 H = int(sys.argv[3])
-N = data.shape[0]
 iterations = int(sys.argv[4])
 init = int(sys.argv[5])
 shuff = int(sys.argv[6])
 const = int(sys.argv[7])
 
+if shuff == 1:
+    data, labels = utils.load_dataset_shuffled(fname)
+else:
+    data, labels = utils.load_dataset(fname)
+
+N = data.shape[0]
 if const == 0:
     N_init_pts = int(round(data.shape[0] * (init / 100)))
 else:
