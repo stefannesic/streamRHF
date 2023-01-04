@@ -109,7 +109,7 @@ cdef float[:] anomaly_score_ids(Leaves insertionDS, Py_ssize_t t, int n):
             leaf_size = insertionDS.counters[i][j]
             if (leaf_size != 0):
                 score = leaf_size / n
-                score = log(1/leaf_size)
+                score = log(1/score)
                 for k in range(0, leaf_size):
                     data_pointer = insertionDS.table[i][j][k]
                     scores[data_pointer] += score
@@ -126,7 +126,7 @@ cdef float anomaly_score_ids_incr(int[:] leaf_indexes, Leaves insertionDS, Py_ss
         leaf_size = insertionDS.counters[i][j]
         if (leaf_size != 0):
             score = leaf_size / n
-            score = log(1/leaf_size)
+            score = log(1/score)
             res += score
     return res
  
