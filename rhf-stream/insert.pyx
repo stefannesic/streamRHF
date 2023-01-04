@@ -4,17 +4,16 @@ from my_imports import Node, np, rht, ks_cy
 def insert(root, x):
     # analyze non leaf node until x is inserted
     # if a non leaf node kurtosis changes, recalculate split
-
+    x_value = Node.data_complete[x]
     # moments for tree recalculations
-    moments0 = np.zeros([root.data.shape[1],5], dtype=np.float32)
+    moments0 = np.zeros([x_value.size,5], dtype=np.float32)
     # tree is not leaf
     if root.left != None and root.right != None:
         # ----- check for resplit ------
-        
         # calculate new kurtosis and sum with new data point
         root.data = np.append(root.data, x, axis=0) 
        
-        new_ks, new_k, root.moments = ks_cy.kurtosis_sum(x, root.data.shape[1]-1, root.moments)
+        new_ks, new_k, root.moments = ks_cy.kurtosis_sum(x_value, root.moments)
 
         # the previously stored probability of splitting on a 
         old_p = np.asarray(root.old_k) / root.old_ks
@@ -26,7 +25,7 @@ def insert(root, x):
             #print("in if delta_p")
             if ((root.attribute != a and delta_p[a] > 0) or (root.attribute == a and delta_p[a] < 0)):                       
                 # node is replaced by a new tree 
-                print("nd=", root.nd)
+                #print("nd=", root.nd)
                 return rht.rht(root.data, root.nd, moments0) 
                 
         # ----- insertion ------- 
@@ -37,7 +36,7 @@ def insert(root, x):
         left = False
 
         # descend left or right
-        if (x[0][a] < a_val):
+        if (x_value[0][a] < a_val):
             left = True
             child = root.left
         else:
@@ -51,7 +50,7 @@ def insert(root, x):
                 root.replace(child, left)
             else:
                 # leaf depth is not max, so new split
-                print("2) child.nd=", child.nd)
+                #print("2) child.nd=", child.nd)
                 root.replace(rht.rht(np.append(child.data, x, axis=0), child.nd, moments0), left)
                 
         else:
