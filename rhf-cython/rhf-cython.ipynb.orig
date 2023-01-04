@@ -44,6 +44,9 @@
    "cell_type": "code",
    "execution_count": null,
    "metadata": {},
+<<<<<<< Updated upstream
+   "outputs": [],
+=======
    "outputs": [
     {
      "name": "stdout",
@@ -54,6 +57,7 @@
      ]
     }
    ],
+>>>>>>> Stashed changes
    "source": [
     "setup_code='''\n",
     "import scipy.io as sio\n",
@@ -79,7 +83,7 @@
     "    score = a_s.anomaly_score(test_rhf, dataset.size, x)\n",
     "    np.append(scores, score)    \n",
     "'''\n",
-    "for i in range(0,3):\n",
+    "for i in range(0,7):\n",
     "    print(\"Total time for rhf-cython (train) = \", timeit(setup=setup_code, stmt=code, number=1))"
    ]
   },
@@ -596,7 +600,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 30,
+   "execution_count": 3,
    "metadata": {
     "scrolled": false
    },
@@ -605,32 +609,24 @@
      "name": "stdout",
      "output_type": "stream",
      "text": [
-      "AP= 0.9979303616198283\n",
-      "AP= 0.9999999999999999\n",
-      "AP= 0.9999999999999998\n",
-      "AP= 0.9999999999999999\n",
-      "AP= 0.9997896065642753\n",
-      "AP= 0.9997896065642751\n",
-      "AP= 0.9999999999999999\n",
-      "AP= 0.9985562690323885\n",
-      "AP= 0.9777108769488685\n",
-      "AP= 0.9999999999999999\n"
+      "AP= 0.566158075408218\n",
+      "AP= 0.5285437409746584\n",
+      "AP= 0.5531346212150454\n",
+      "AP= 0.5434101625971071\n",
+      "AP= 0.5888365502640788\n",
+      "AP= 0.6295244389010121\n",
+      "AP= 0.6455538396461947\n",
+      "AP= 0.5546077697318648\n",
+      "AP= 0.621758825318424\n",
+      "AP= 0.5524846984807551\n"
      ]
     }
    ],
    "source": [
-    "import scipy.io as sio\n",
-    "import scipy.stats as sstats\n",
-    "import random \n",
-    "import numpy as np\n",
-    "import rht\n",
-    "import rhf\n",
-    "import anomaly_score as a_s\n",
-    "import Node\n",
     "# set the number of trees and max height\n",
     "H = 5\n",
     "T = 100\n",
-    "mat_contents = sio.loadmat(\"../datasets/musk.mat\")\n",
+    "mat_contents = sio.loadmat(\"../datasets/cardio.mat\")\n",
     "dataset = mat_contents['X'] \n",
     "labels = mat_contents['y']\n",
     "dataset = dataset.astype('float32')\n",
