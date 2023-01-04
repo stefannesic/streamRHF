@@ -31,11 +31,12 @@ data, labels = utils.load_dataset(fname)
 for i in range(0,10):
     t0 = time.time()
 
-    indexes, split_info = rhf.rhf(data, T, H)
+    indexes, split_info, insertionDS = rhf.rhf(data, T, H)
     scores = a_s.anomaly_score(indexes, T)
     AP = average_precision_score(labels, scores)
 
     t1 = time.time()
-    #print(np.asarray(split_info[0].values))
+    print(np.asarray(split_info[i].kurtosis_vals[0]))
+    print(split_info[i].kurtosis_sum[0])
     print("Total time for rhf-cython (train) = ", t1-t0)
     print("AP=", AP)
