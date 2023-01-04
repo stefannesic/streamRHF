@@ -15,7 +15,7 @@ if len(sys.argv) < 2:
     quit()
 
 
-mat_contents = sio.loadmat("../datasets/" + str(sys.argv[1]))
+mat_contents = sio.loadmat("../../datasets/" + str(sys.argv[1]))
 dataset = mat_contents['X']
 labels = mat_contents['y']
 
