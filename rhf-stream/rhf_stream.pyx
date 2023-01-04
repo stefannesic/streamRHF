@@ -1,4 +1,4 @@
-from my_imports import np, ga, random, time, ks_cy
+from my_imports import np, random, time
 from libc.math cimport log
 
 cdef class Split:
@@ -78,11 +78,11 @@ cdef void rht_stream(float[:,:] data, int[:,:] indexes, Leaves insertionDS, Spli
     # simulating real-time (except trees constructed one by one) 
     # construct initial tree with batch algorithm on the first N points
     cdef int d = data.shape[1]
-    rht(data, indexes, insertionDS, split_info, moments, start=0, end=N_init_pts-1, nd=0, H=H, nodeID=0, t_id=t_id) 
+    rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, start=0, end=N_init_pts-1, nd=0, H=H, nodeID=0, t_id=t_id) 
     print("Initial tree constructed.")   
     t0 = time.time()
     # update existing tree
-    
+ 
     for i in range(N_init_pts, N):
         insert(data, moments, split_info, H, insertionDS, kurtosis_arr, i, t_id)
     
@@ -106,23 +106,21 @@ cdef int sort(float[:,:] data, int[:,:] indexes, int start, int end, int a, floa
         indexes[j][0] = temp
     return j
          
-cdef void rht(float[:,:] data, int[:,:] indexes, Leaves insertionDS, Split split_info, float[:,:,:] moments, int start, int end, int nd, int H, int nodeID=0, int t_id=0):
+cdef void rht(float[:,:] data, int[:,:] indexes, Leaves insertionDS, Split split_info, float[:,:,:] moments, float[:] kurtosis_arr, int start, int end, int nd, int H, int nodeID=0, int t_id=0):
     cdef int ls, a, split
     cdef float ks, a_val 
-    cdef float[:] kurt
     cdef float[:,:] moments_res
     if (end == start or nd >= H):
         # leaf size
         fill_leaf(indexes, insertionDS, nodeID, nd, H, start, end, 0, t_id) 
     else:
         # calculate kurtosis
-        ks, kurt, moments_res = ks_cy.kurtosis_sum(data, indexes, moments[nodeID], start, end)
-        moments[nodeID] = moments_res
+        ks = kurtosis_sum(data, indexes, moments[nodeID], kurtosis_arr, start, end)
         if (ks == 0): # stop if all elems are the same
             fill_leaf(indexes, insertionDS, nodeID, nd, H, start, end, 1, t_id) 
 
         else: # split
-            a, a_val = ga.get_attribute(data, indexes, start, end, ks, kurt)
+            a, a_val = get_attribute(data, indexes, start, end, ks, kurtosis_arr)
             # sort indexes
             split = sort(data, indexes, start, end, a, a_val)
 
@@ -130,11 +128,85 @@ cdef void rht(float[:,:] data, int[:,:] indexes, Leaves insertionDS, Split split
             split_info.splits[t_id][nodeID] = split
             split_info.attributes[t_id][nodeID] = a
             split_info.values[t_id][nodeID] = a_val
-            split_info.kurtosis_vals[t_id][nodeID] = kurt
+            split_info.kurtosis_vals[t_id][nodeID] = kurtosis_arr
             split_info.kurtosis_sum[t_id][nodeID] = ks
-            rht(data, indexes, insertionDS, split_info, moments, start, split-1, nd+1, H, nodeID=2*nodeID+1, t_id=t_id)
-            rht(data, indexes, insertionDS, split_info, moments, split, end, nd+1, H, nodeID=2*nodeID+2, t_id=t_id)
-           
+            rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, start, split-1, nd+1, H, nodeID=2*nodeID+1, t_id=t_id)
+            rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, split, end, nd+1, H, nodeID=2*nodeID+2, t_id=t_id)
+
+
+cdef (int, float) get_attribute(float[:,:] data, int[:,:] indexes, int start, int end, float ks, float[:] kurt):
+    cdef int a, i, data_index
+    cdef float a_val, a_min, a_max, temp, r
+    
+    r = random.uniform(0, ks)
+   
+    kurt = np.cumsum(kurt)
+    
+    # the attribute is found in the bins of the cumulative sum of kurtoses 
+    a = np.digitize(r, kurt, True)
+    # get min and max
+    data_index = indexes[start][0]
+    a_min = data[data_index][a]
+    a_max = a_min
+
+    for i in range(start, end+1):
+            temp = data[indexes[i][0]][a]
+            if a_min > temp:
+                a_min = temp
+            elif a_max < temp:
+                a_max = temp
+    
+    a_val = a_min
+    
+    while a_val == a_min or a_val == a_max:
+        a_val = random.uniform(a_min, a_max)
+    
+    return a, a_val
+
+cdef float kurtosis_sum(float[:,:] data, int[:,:] indexes, float[:,:] moments, float[:] kurtosis_arr, int start, int end):
+    cdef Py_ssize_t d = data.shape[1]
+    cdef int a
+    cdef float ks = 0
+    for a in range(0, d): 
+        kurtosis_arr[a] = incr_kurtosis(data, indexes, moments[a], start, end, a)
+        kurtosis_arr[a] = log(kurtosis_arr[a] + 1)
+        ks += kurtosis_arr[a]
+    return ks
+
+cdef float incr_kurtosis(float[:,:] data, int[:,:] indexes, float[:] moments, int start, int end, int a):
+    cdef float mean, M2, M3, M4, n, delta, delta_n, delta_n2, term1, n1, kurtosis, x
+  
+    n, mean, M2, M3, M4 = (0, 0, 0, 0, 0)
+    #moments = np.empty([6], dtype=np.float32)
+
+    # for loop for when moments are initialized on multiple elements
+    for i in range(start, end+1):
+        x = data[indexes[i][0]][a]
+        n1 = n
+        n = n + 1
+        delta = x - mean
+        delta_n = delta / n
+        delta_n2 = delta_n * delta_n 
+        term1 = delta * delta_n * n1
+        mean = mean + delta_n
+        M4 = M4 + term1 * delta_n2 * (n*n - 3*n + 3) + 6 * delta_n2 * M2 - 4 * delta_n * M3
+        M3 = M3 + term1 * delta_n * (n - 2) - 3 * delta_n * M2
+        M2 = M2 + term1
+
+    moments[0] = mean
+    moments[1] = M2
+    moments[2] = M3
+    moments[3] = M4
+    moments[4] = n
+    
+        
+    if M4 == 0: 
+        return 0
+    else:
+        kurtosis = (n * M4) / (M2 * M2)
+        return kurtosis
+
+          
 cdef void fill_leaf(int[:,:] indexes, Leaves insertionDS, int nodeID, int nd, int H, int start, int end, int ls = 0, int t_id=0):
     cdef int i, leaf_index, counter
     # leaf size is not set, calculate it.
