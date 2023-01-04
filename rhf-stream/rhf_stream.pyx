@@ -153,7 +153,6 @@ cpdef rhf_stream(float[:,::1] data, int t, int h, int N_init_pts, float eps):
     cdef int[::1] new_indexes = np.empty([W_MAX], np.intc)
     # intialize t trees
     for i in range(t):
-        #print("i=", i)
         # intialize dataset.index
         index_range = np.arange(0, N_init_pts, dtype=np.intc)
         indexes[i] = index_range
@@ -173,9 +172,9 @@ cpdef rhf_stream(float[:,::1] data, int t, int h, int N_init_pts, float eps):
             leaf_indexes[j] = insert(data, moments[j], splits, h, insertionDS, kurtosis_arr, new_indexes, i, j, eps)
         # score point inserted in forest
         scores[i] = anomaly_score_ids_incr(leaf_indexes, insertionDS, t, i)
-        
+  
     t1 = timeit.default_timer()
-
+    
     print("Total time for insertions=", t1 - t0)
           
     return scores
@@ -198,18 +197,18 @@ cdef int sort(float[:,::1] data, int[:] indexes, int start, int end, Py_ssize_t 
     return j
          
 cdef int rht(float[:,::1] data, int[:] indexes, Leaves insertionDS, Split split_info, float[:,:,:] moments, 
-              float[:] kurtosis_arr, int start, int end, int nd, int H, int d, Py_ssize_t nodeID=0, Py_ssize_t t_id=0, Py_ssize_t insertion_pt = -1):
-    cdef int ls, a, split, fill_leaf_res = -1
+              float[:] kurtosis_arr, int start, int end, int nd, int H, int d, Py_ssize_t nodeID=0, Py_ssize_t t_id=0, float[:] insertion_pt = None):
+    cdef int ls, a, split, insertion_leaf = -1
     cdef float ks, a_val 
     if (end == start or nd >= H):
         # leaf size
-        fill_leaf_res = fill_leaf(indexes, insertionDS, nodeID, nd, H, start, end, 0, t_id, insertion_pt) 
+        insertion_leaf = fill_leaf(indexes, insertionDS, nodeID, nd, H, start, end, 0, t_id) 
     else:   
         # calculate kurtosis
         ks = kurtosis_sum(data, indexes, moments[nodeID], kurtosis_arr, start, end)
         if (ks == 0): # stop if all elems are the same
             split_info.splits[t_id][nodeID] = 0
-            fill_leaf_res = fill_leaf(indexes, insertionDS, nodeID, nd, H, start, end, 1, t_id, insertion_pt) 
+            insertion_leaf = fill_leaf(indexes, insertionDS, nodeID, nd, H, start, end, 1, t_id) 
         else: # split
             # store kurtosis values for insertion
             split_info.kurtosis_vals[t_id][nodeID] = kurtosis_arr
@@ -222,10 +221,22 @@ cdef int rht(float[:,::1] data, int[:] indexes, Leaves insertionDS, Split split_
             split_info.splits[t_id][nodeID] = split
             split_info.attributes[t_id][nodeID] = a
             split_info.values[t_id][nodeID] = a_val
-            rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, start, split-1, nd+1, H, d, nodeID=2*nodeID+1, t_id=t_id)
-            rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, split, end, nd+1, H, d, nodeID=2*nodeID+2, t_id=t_id)
-    
-    return fill_leaf_res
+
+            # check on which side insertion point ended up 
+            # return the result of that side 
+            if insertion_pt != None: 
+                if insertion_pt[a] <= a_val:
+                    rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, split, end, nd+1, H, d, nodeID=2*nodeID+2, t_id=t_id, insertion_pt=insertion_pt)
+                    insertion_leaf = rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, start, split-1, nd+1, H, d, nodeID=2*nodeID+1, t_id=t_id, insertion_pt=insertion_pt)
+                else:
+                    rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, start, split-1, nd+1, H, d, nodeID=2*nodeID+1, t_id=t_id, insertion_pt=insertion_pt)
+                    insertion_leaf = rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, split, end, nd+1, H, d, nodeID=2*nodeID+2, t_id=t_id, insertion_pt=insertion_pt)
+            else:
+                rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, start, split-1, nd+1, H, d, nodeID=2*nodeID+1, t_id=t_id, insertion_pt=insertion_pt)
+                rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, split, end, nd+1, H, d, nodeID=2*nodeID+2, t_id=t_id, insertion_pt=insertion_pt)
+
+                
+    return insertion_leaf
 
 cdef (int, float) get_attribute(float[:,::1] data, int[:] indexes, Py_ssize_t start, Py_ssize_t end, float ks, float[:] kurt, int d):
     cdef Py_ssize_t i, a = -1, data_index
@@ -309,7 +320,7 @@ cdef float incr_kurtosis(float[:,::1] data, int[:] indexes, float[:] moments, in
 
           
 cdef int fill_leaf(int[:] indexes, Leaves insertionDS, int nodeID, int nd, int H, 
-                    int start, int end, int ls = 0, Py_ssize_t t_id=0, Py_ssize_t insertion_pt = -1):
+                    int start, int end, int ls = 0, Py_ssize_t t_id=0):
     cdef Py_ssize_t i, leaf_index, counter
     # leaf size is not set, calculate it.
     if ls == 0:
@@ -323,27 +334,15 @@ cdef int fill_leaf(int[:] indexes, Leaves insertionDS, int nodeID, int nd, int H
     
     # at this point, leaf_index is nodeID and needs to be adjusted for indexing
     leaf_index = leaf_index - ((2**H) - 1)
-    if insertion_pt != -1:
-        for i in range(start, end+1):  
-            # store leaf in insertion DS
-            counter = insertionDS.counters[t_id][leaf_index]
-            # get the actual pointer to the dataset indexes[k]
-            insertionDS.table[t_id][leaf_index][counter] = indexes[i]
-            # compare with insertion_pt value
-            if (indexes[i] == insertion_pt):
-                return leaf_index
-            # increment counter
-            insertionDS.counters[t_id][leaf_index] += 1
-    else:   
-        for i in range(start, end+1):  
-            # store leaf in insertion DS
-            counter = insertionDS.counters[t_id][leaf_index]
-            # get the actual pointer to the dataset indexes[k]
-            insertionDS.table[t_id][leaf_index][counter] = indexes[i]
-            # increment counter
-            insertionDS.counters[t_id][leaf_index] += 1
-    
-    return -1
+    for i in range(start, end+1):  
+        # store leaf in insertion DS
+        counter = insertionDS.counters[t_id][leaf_index]
+        # get the actual pointer to the dataset indexes[k]
+        insertionDS.table[t_id][leaf_index][counter] = indexes[i]
+        # increment counter
+        insertionDS.counters[t_id][leaf_index] += 1
+
+    return leaf_index
 
 # inserts new data point in leaf
 cdef int insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int H, Leaves insertionDS, float[::1] new_kurtosis_vals, 
@@ -408,7 +407,7 @@ cdef int insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int H
                     # add also point to insert
                     new_indexes[total_counter] = i    
                     leaf_index = rht(data, new_indexes, insertionDS, split_info, moments, new_kurtosis_vals, 
-                        start=0, end=total_counter, nd=nd, H=H, d=d, nodeID=nodeID, t_id=t_id)
+                        start=0, end=total_counter, nd=nd, H=H, d=d, nodeID=nodeID, t_id=t_id, insertion_pt=data[i])
                     # tree rebuilt with inserted point => STOP
                     return leaf_index
              
@@ -432,6 +431,7 @@ cdef int insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int H
         counter = insertionDS.counters[t_id][leaf_index]
         insertionDS.table[t_id][leaf_index][counter] = i
         insertionDS.counters[t_id][leaf_index] += 1
+
         return leaf_index
     else:
         # not a max depth so extend depth
@@ -450,7 +450,8 @@ cdef int insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int H
         new_indexes = temp   
         # fill new_indexes with indexes found in the leaf that is being split
         leaf_index = rht(data, new_indexes, insertionDS, split_info, moments, new_kurtosis_vals,
-                          start=0, end=counter, nd=nd, H=H, d=d, nodeID=nodeID, t_id=t_id)
+                          start=0, end=counter, nd=nd, H=H, d=d, nodeID=nodeID, t_id=t_id, insertion_pt=data[i])
+        
         return leaf_index
 
 # find leaf
