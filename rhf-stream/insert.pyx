@@ -5,14 +5,22 @@ def insert(float[:,:] data, float[:,:,:] moments, split_info, int H, insertionDS
     # if a non leaf node kurtosis changes, recalculate split
     # start at root node
     cdef int nodeID = 0, a, leaf_index, counter, nd = 0
-    cdef float a_val
+    cdef float a_val, old_kurtosis_sum, new_kurtosis_sum
+    cdef float[:] old_kurtosis_vals
+    cdef float[:] new_kurtosis_vals
+    cdef float[:,:] moments_res
     # while leaf node isn't reached
     while nodeID < (2**H)-1 and split_info.splits[nodeID] != 0:
         a = split_info.attributes[nodeID]
         a_val = split_info.values[nodeID]
         # calculate new kurtosis
-        # TODO 
- 
+        old_kurtosis_vals = split_info.kurtosis_vals[nodeID]
+        old_kurtosis_sum = split_info.kurtosis_sum[nodeID]
+        new_kurtosis_sum, new_kurtosis_vals, moments_res = ks_cy.kurtosis_sum_ids(data, moments[nodeID], i) 
+        moments[nodeID] = moments_res
+        # analyze kurtosis for rebuild
+        # TODO
+        
         if data[i][a] <= a_val:
             nodeID = nodeID*2 + 1
         else:
