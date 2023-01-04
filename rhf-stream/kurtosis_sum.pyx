@@ -12,7 +12,7 @@ def same_values(float[:] arr):
 # sum of log(Kurtosis(X[a] + 1)) of attributes 0 to d inclusive
 # when the function is used for insertions, insert_mode is True
 def kurtosis_sum(float[:,:] X, moments, bint insert_mode=False):
-    t0 = time.time()
+    t0 = time.monotonic()
     cdef bint samevals
     cdef int n_elems = X.shape[0]
     cdef float summ = 0.0
@@ -24,13 +24,13 @@ def kurtosis_sum(float[:,:] X, moments, bint insert_mode=False):
         X_0 = X[0]
     if (n_elems == 0):
         print("X is passed as empty")
-    t1 = time.time()
+    t1 = time.monotonic()
     Node.ksstats[0] += (t1 - t0)
 
-    t2 = time.time()
+    t2 = time.monotonic()
     # loop over the transpose matrix in order to analyze by column
     for a in range(0, d):
-        t4 = time.time() 
+        t4 = time.monotonic() 
         # if we're not in insertion mode, calculate if all of the values are the same
         if not(insert_mode):
             samevals = not(same_values(X[:,a]))
@@ -39,9 +39,9 @@ def kurtosis_sum(float[:,:] X, moments, bint insert_mode=False):
         
         # samevals is always false in insert_mode so only the second part matters 
         if (samevals or (insert_mode and (moments[a][5] == 0 or moments[a][0] != X_0[a]))):
-            t6 = time.time()
+            t6 = time.monotonic()
             kurt[a], moments[a] = ik.incr_kurtosis(X[:,a], moments[a])
-            t7 = time.time()
+            t7 = time.monotonic()
             # time for incremental function
             Node.ksstats[2] += (t7- t6)        
             kurt[a] = log(kurt[a] + 1)
@@ -57,19 +57,19 @@ def kurtosis_sum(float[:,:] X, moments, bint insert_mode=False):
         if (a == 0):
             Node.ksstats[1] += (t4-t2)
         # measure the total time of the loop contents         
-        t5 = time.time()
+        t5 = time.monotonic()
         Node.ksstats[3] += (t5-t4)
-        t5b= time.time()
+        t5b= time.monotonic()
         Node.ksstats[5] += (t5b-t5)
     # time entire for loop
-    t3 = time.time()
+    t3 = time.monotonic()
     Node.ksstats[4] += (t3 - t2)  
     return summ, kurt, moments
 
 
 '''
 def kurtosis_sum_vect(float[:,:] X, moments, bint insert_mode=False):
-    t0 = time.time()
+    t0 = time.monotonic()
     cdef bint samevals
     cdef int n_elems = X.shape[0]
     cdef float summ = 0.0
@@ -81,10 +81,10 @@ def kurtosis_sum_vect(float[:,:] X, moments, bint insert_mode=False):
         X_0 = X[0]
     if (n_elems == 0):
         print("X is passed as empty")
-    t1 = time.time()
+    t1 = time.monotonic()
     Node.ksstats[0] += (t1 - t0)
 
-    t2 = time.time()
+    t2 = time.monotonic()
     # if we're not in insertion mode, calculate if all of the values are the same
     if not(insert_mode):
         samevals = not(same_values(X[:,a]))
@@ -93,9 +93,9 @@ def kurtosis_sum_vect(float[:,:] X, moments, bint insert_mode=False):
     
     # samevals is always false in insert_mode so only the second part matters 
     if (samevals or (insert_mode and (moments[a][5] == 0 or moments[a][0] != X_0[a]))):
-        t6 = time.time()
+        t6 = time.monotonic()
         kurt, moments = ik.incr_kurtosis_vect(X, moments)
-        t7 = time.time()
+        t7 = time.monotonic()
         # time for incremental function
         Node.ksstats[2] += (t7- t6)        
         kurt = np.asarray(kurt) + 1
@@ -110,7 +110,7 @@ def kurtosis_sum_vect(float[:,:] X, moments, bint insert_mode=False):
         moments[a][4] += 1
     
     # time entire for loop
-    t3 = time.time()
+    t3 = time.monotonic()
     Node.ksstats[4] += (t3 - t2)  
     return summ, kurt, moments
 '''
