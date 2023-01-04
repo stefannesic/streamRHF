@@ -1,3 +1,5 @@
+import sys 
+sys.path.insert(1, '../datasets/forStefan/')
 from timeit import timeit
 import time
 from sklearn.metrics import average_precision_score
@@ -10,8 +12,8 @@ import rht
 import rhf
 import anomaly_score as a_s
 import Node
-import sys
 import mat73
+import utils
 # set the number of trees and max height
 H = 5
 T = 100
@@ -20,15 +22,8 @@ if len(sys.argv) < 2:
      quit()
 
 fname = str(sys.argv[1])
- 
-if (fname == "smtp.mat"):
-    mat_contents = mat73.loadmat("../datasets/" + fname)
-else:
-    mat_contents = sio.loadmat("../datasets/" + fname)
 
-dataset = mat_contents['X'] 
-labels = mat_contents['y']
-dataset = dataset.astype('float32') 
+dataset, labels = utils.load_dataset(fname)
 
 Node.data_complete = dataset
 
