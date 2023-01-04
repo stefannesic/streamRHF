@@ -1,33 +1,29 @@
-from my_imports import np, ks_cy, random, Node
+from my_imports import np, ks_cy, random, dataset
 
-# use kurtosis sum to get best attribute for the split
-# returns attribute, its column and a random split value
-cpdef get_attribute(long[:] X, float[:] kurt, float r):
-    cdef int end = X.shape[1]
-    cdef float[:] a_col
-    cdef float a_val, a_min, a_max
-    cdef Py_ssize_t a 
-    cdef float[:,:] X_values 
-    kurt = np.cumsum(kurt)
+def get_attribute(int tree, int start, int end, float ks, float[:] kurt):
+    cdef int a, i 
+    cdef float a_val, a_min, a_max, temp, r
+    
+    r = random.uniform(0, ks)
    
+    kurt = np.cumsum(kurt)
+    
     # the attribute is found in the bins of the cumulative sum of kurtoses 
-    a = np.digitize(r, kurt, True) 
-    
-    try:
-        X_values = Node.data_complete[X]
-        a_col = X_values[:, a]
-    except:   
-        print("ga, r=", r)
-        print("ga, kurt=", np.asarray(kurt))
-        print("ga, a=", a)
+    a = np.digitize(r, kurt, True)
+    # get min and max
+    a_min = dataset.data[dataset.index[tree][0][0]][a]
+    a_max = dataset.data[dataset.index[tree][0][0]][a]
 
+    for i in range(start, end+1):
+            temp = dataset.data[dataset.index[tree][i][0]][a]
+            if a_min > temp:
+                a_min = temp
+            elif a_max < temp:
+                a_max = temp
     
-    # ensures that the split will be proper (no split on extremes)
-    a_min = np.amin(a_col)
-    a_max = np.amax(a_col)
     a_val = a_min
-
+    
     while a_val == a_min or a_val == a_max:
         a_val = random.uniform(a_min, a_max)
     
-    return a, a_col, a_val
+    return a, a_val

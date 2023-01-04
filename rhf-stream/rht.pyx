@@ -1,64 +1,46 @@
-from my_imports import np, Node, ks_cy, ga, random, time
+from my_imports import np, ks_cy, ga, random, constants, dataset
 
-# Construction of a random histogram tree
-def rht(X, int nd, float[:,:] moments):
-    cdef float r, ks, a_val
-    cdef int a
+# sort indexes according to split
+def sort(int tree, int start, int end, int a, float a_val):
+    cdef float temp
+    cdef int i, j
+    # quicksort Hoare partition scheme
+    i = start
+    j = end
+    while i < j:
+        while dataset.data[dataset.index[tree][i][0]][a] <= a_val and i < j: 
+            i = i + 1
+        while dataset.data[dataset.index[tree][j][0]][a] > a_val and j > i:
+            j = j - 1
+        temp = dataset.index[tree][i][0]
+        dataset.index[tree][i][0] = dataset.index[tree][j][0]
+        dataset.index[tree][j][0] = temp
+        
+    return j
+         
+def rht(int tree, int start, int end, int nd):
+    cdef int ls, a
+    cdef float ks, a_val, split 
     cdef float[:] kurt
-    #print("----------------------------------------nd=", nd)
-    # last condition checks if all instances are the same --> Leaf
-    if nd >= Node.H or X.shape[0] == 1:
-        #t1 = time.time() 
-        # if leaf is at max depth no use in storing moments
-        N = Node.Node(nd=nd, data=np.asarray(X))
-        #t2 = time.time()
-        #print("leaf time=", t2 - t1)
-        return N
+    if (end == start or nd >= constants.H):
+        # leaf size
+        fill_leaf(tree, start, end)
     else:
-        # attribute selected according to kurtosis
-        X_values = Node.data_complete[X]
-    
-        
-        t3 = time.time()
-        ks, kurt, moments = ks_cy.kurtosis_sum(X_values, moments)
-      
-        t4 = time.time()
-        Node.ktime[nd] += (t4-t3)
-        #print("node kurtosis and x_values=", t4 - t3)
-        # if all instances are the same 
-        if ks == 0:
-            #t7 = time.time()
-            N =  Node.Node(nd=nd, data=np.asarray(X), moments=moments)
-            #t8 = time.time()
-            #print("leaf of same elements creation=", t8 - t7)
-            return N
-        #t5 = time.time()
-        # ks may not be included depending on rounding
-        r = random.uniform(0, ks)
-        a, a_col, a_val = ga.get_attribute(X, kurt, r)
+        # calculate kurtosis
+        ks, kurt = ks_cy.kurtosis_sum(tree, start, end)
+        if (ks == 0): # stop if all elems are the same
+            fill_leaf(tree, start, end)
+        else: # split
+            a, a_val = ga.get_attribute(tree, start, end, ks, kurt)
+            # sort indexes
+            split = sort(tree, start, end, a, a_val)
+            rht(tree, start, split-1, nd+1)
+            rht(tree, split, end, nd+1)
+           
 
-        Xl = X[X_values[:, a] < a_val]
-        Xr = X[X_values[:, a] >= a_val]
-        
-        if (Xl.size == 0 or Xr.size == 0):
-            print("Xl=", Xl)
-            print("Xr=", Xr)
-            print("X=", X)
-            print("a=", a)
-            print("r=", r)
-            print("a_val=", a_val)
-            print("kurt(a)=", kurt[a])
-            print("cumsum", np.cumsum(kurt))
-            print("X_values[:, a]", X_values[:, a])
-
-        moments0 = np.zeros([X_values.shape[1], 6], dtype=np.float32)
-        
-        #t6 = time.time()
-        #print("attribute selection, values split and moments=", t6 - t5)
-        # moments are stored in Node but not passed in next calls to rht
-        # since there is only incr kurtosis, each Node starts kurtosis calculation from scratch
-        Xl = rht(Xl, nd + 1, moments0)
-        Xr = rht(Xr, nd + 1, moments0)
-
-        return Node.Node(a_val, a, Xl, Xr, nd, X, moments, ks, kurt)
+def fill_leaf(int tree, int start, int end):
+    cdef int ls, i
+    ls = end - start + 1
+    for i in range(start, end+1):
+        dataset.index[tree][i][1] = ls
 
