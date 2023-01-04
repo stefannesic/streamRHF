@@ -183,7 +183,6 @@ cpdef rhf_stream(double[:,::1] data, int t, int h, int N_init_pts):
             # reset data structures
             insertionDS = Leaves(t, h, W_MAX)
             splits = Split(t, h, d)
-            moments = np.zeros([t, (2**h)-1, d, 6], dtype=np.float64)
             # initialize forest based on the now filled "current window"
             for j in range(t):
                 # intialize dataset.index
