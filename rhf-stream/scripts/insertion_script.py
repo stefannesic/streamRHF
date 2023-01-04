@@ -40,3 +40,5 @@ for m in range(0, iterations):
     t1 = time.time()
     print("AP=", average_precision_score(labels, scores))
     print("time (whole)=", t1 - t0)
+    data, labels = utils.load_dataset(fname)
+    data = data.copy(order='C')
