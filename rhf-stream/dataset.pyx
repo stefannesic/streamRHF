@@ -1,2 +1,0 @@
-global X
-global index

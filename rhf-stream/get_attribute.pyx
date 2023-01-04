@@ -1,6 +1,6 @@
-from my_imports import np, ks_cy, random, dataset
+from my_imports import np, ks_cy, random
 
-def get_attribute(int tree, int start, int end, float ks, float[:] kurt):
+def get_attribute(float[:,:] data, int[:,:] indexes, int start, int end, float ks, float[:] kurt):
     cdef int a, i 
     cdef float a_val, a_min, a_max, temp, r
     
@@ -11,11 +11,11 @@ def get_attribute(int tree, int start, int end, float ks, float[:] kurt):
     # the attribute is found in the bins of the cumulative sum of kurtoses 
     a = np.digitize(r, kurt, True)
     # get min and max
-    a_min = dataset.data[dataset.index[tree][0][0]][a]
-    a_max = dataset.data[dataset.index[tree][0][0]][a]
+    a_min = data[indexes[0][0]][a]
+    a_max = data[indexes[0][0]][a]
 
     for i in range(start, end+1):
-            temp = dataset.data[dataset.index[tree][i][0]][a]
+            temp = data[indexes[i][0]][a]
             if a_min > temp:
                 a_min = temp
             elif a_max < temp:
