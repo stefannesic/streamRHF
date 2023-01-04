@@ -357,7 +357,6 @@ cdef void insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int 
         leaf_index = leaf_index - ((2**H) - 1)
        
         # insert the leaf  
-        table = insertionDS.table[t_id]
         counter = insertionDS.counters[t_id][leaf_index]
         insertionDS.table[t_id][leaf_index][counter] = i
         # store all elements in leaf in a temporary variable
