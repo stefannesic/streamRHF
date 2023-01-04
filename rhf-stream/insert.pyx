@@ -24,7 +24,7 @@ def insert(root, x):
         for a in np.where(abs(delta_p) >= 1 - rht.eps)[0]:
             if ((root.attribute != a and delta_p[a] > 0) or (root.attribute == a and delta_p[a] < 0)):                       
                 # node is replaced by a new tree 
-                #print("nd=", root.nd)
+                Node.rebuild[root.nd]++
                 return rht.rht(root.data, root.nd, moments0) 
         
         # ----- insertion ------- 
@@ -49,7 +49,7 @@ def insert(root, x):
                 root.replace(child, left)
             else:
                 # leaf depth is not max, so new split
-                #print("2) child.nd=", child.nd)
+                Node.rebuild[5]++
                 root.replace(rht.rht(np.append(child.data, x, axis=0), child.nd, moments0), left)
                 
         else:

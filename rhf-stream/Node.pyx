@@ -7,6 +7,9 @@ class Node:
     N = 0
     # the data
     data_complete = None
+    # rebuild info
+    # 0 - 4 indexes for the depths, 5th index for leaf extends
+    rebuilds = None    
     
     def __init__(self, float value = -1, int attribute = -1, left = None, right = None, nd=0, data = None, moments = None, old_ks = 0, old_k = None):
         self.value = value
@@ -34,9 +37,7 @@ class Node:
     # insert data in leaf
     def insertData(self, x):
         # if the instance isn't already in the leaf
-        # if not any(np.array_equal(x[0],j) for j in self.data):
         self.data = np.append(self.data, x, axis=0)
-        #print("self.data=", self.data)
         
     # prints the data and splitting information in order of left branch, parent node, right branch
     def printNode(self, int level):
