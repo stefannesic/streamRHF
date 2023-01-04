@@ -144,6 +144,7 @@ cdef void rht(float[:,::1] data, int[:] indexes, Leaves insertionDS, Split split
         # calculate kurtosis
         ks = kurtosis_sum(data, indexes, moments[nodeID], kurtosis_arr, start, end)
         if (ks == 0): # stop if all elems are the same
+            split_info.splits[t_id][nodeID] = 0
             fill_leaf(indexes, insertionDS, nodeID, nd, H, start, end, 1, t_id) 
         else: # split
             # store kurtosis values for insertion
