@@ -11,7 +11,6 @@ cpdef rht_stream(float[:,:] data, int[:,:] indexes, insertionDS, split_info, flo
     t0 = time.time()
     # update existing tree
     for i in range(N_init_pts, N):
-    #for i in range(N_init_pts, data.shape[0]):
         insert(data, moments, split_info, H, insertionDS, i)
  
     t1 = time.time() 
@@ -91,18 +90,22 @@ cdef void fill_leaf(int[:,:] indexes, insertionDS, int nodeID, int nd, int H, in
 
 # inserts new data point in leaf
 cdef void insert(float[:,:] data, float[:,:,:] moments, split_info, int H, insertionDS, int i):
+    
     # analyze non leaf node until x is inserted
     # if a non leaf node kurtosis changes, recalculate split
     # start at root node
     cdef int nodeID = 0, a, split_a, leaf_index, counter, nd = 0, d = data.shape[1], ks = 0
+    
     cdef float split_a_val, old_kurtosis_sum, new_kurtosis_sum
     cdef float[:] old_kurtosis_vals
+    # THE NP.EMPTY GETS TIME FROM 0.0000001 VS. 0.03
     cdef float[:] new_kurtosis_vals = np.empty([d], np.float32)
     cdef float[:,:] moments_calc
     cdef float[:] M2, M3, M4, n
     
     # while leaf node isn't reached
     while nodeID < (2**H)-1 and split_info.splits[nodeID] != 0:
+         
         split_a = split_info.attributes[nodeID]
         split_a_val = split_info.values[nodeID]
         # calculate new kurtosis
@@ -133,7 +136,8 @@ cdef void insert(float[:,:] data, float[:,:,:] moments, split_info, int H, inser
 
         # increase node depth
         nd += 1
-
+    
+    
     # insert leaf
     
     # calculate index for insertionDS
@@ -148,7 +152,7 @@ cdef void insert(float[:,:] data, float[:,:,:] moments, split_info, int H, inser
     counter = insertionDS.counters[leaf_index]
     insertionDS.table[leaf_index][counter] = i
     insertionDS.counters[leaf_index] += 1
-    
+
 
 cdef void kurtosis_sum_ids(float[:,:] data, float[:,:] moments, int i):
     cdef Py_ssize_t d = data.shape[1]
