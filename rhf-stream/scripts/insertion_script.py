@@ -31,7 +31,9 @@ init = int(sys.argv[5])
 N_init_pts = int(round(data.shape[0] * (init / 100)))
 print("N_init_pts=", N_init_pts)
 
+data = np.array(data, dtype='float64')
 data = data.copy(order='C')
+
 for m in range(0, iterations):
     print("Iteration=", m)
     # build info reinitialized
@@ -41,4 +43,5 @@ for m in range(0, iterations):
     print("AP=", average_precision_score(labels, scores))
     print("time (whole)=", t1 - t0)
     data, labels = utils.load_dataset(fname)
+    data =  np.array(data, dtype='float64')
     data = data.copy(order='C')
