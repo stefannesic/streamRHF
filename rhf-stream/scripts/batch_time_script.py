@@ -9,9 +9,7 @@ import scipy.io as sio
 import scipy.stats as sstats
 import random 
 import numpy as np
-import rht
-import rhf
-import anomaly_score as a_s
+import rhf_stream as rhfs
 import mat73
 import utils
 
@@ -30,9 +28,9 @@ data, labels = utils.load_dataset(fname)
 N = data.shape[0]
 for i in range(0,10):
     t0 = time.time()
-    indexes, split_info, insertionDS, moments = rhf.rhf(data, T, H)
+    insertionDS = rhfs.rhf(data, T, H)
     #scores = a_s.anomaly_score(indexes, T)
-    scores = a_s.anomaly_score_ids(insertionDS, T, N)
+    scores = rhfs.anomaly_score_ids(insertionDS, T, N)
     AP = average_precision_score(labels, scores)
 
     t1 = time.time()
