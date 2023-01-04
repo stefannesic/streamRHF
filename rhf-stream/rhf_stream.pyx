@@ -155,14 +155,14 @@ cdef void insert(float[:,:] data, float[:,:,:] moments, Split split_info, int H,
          
         old_kurtosis_vals = split_kvals[nodeID]
         old_kurtosis_sum = split_ks[nodeID]
-        kurtosis_sum_ids(data, moments[nodeID], i) 
+        new_kurtosis_sum = kurtosis_sum_ids(data, moments[nodeID], i) 
         #moments_calc = moments[nodeID] 
         #M2 = moments_calc[:,1]
         #M3 = moments_calc[:,2]
         #M4 = moments_calc[:,3]
         #n = moments_calc[:,4]
         new_kurtosis_vals = moments[nodeID,:,5]
-    
+        '''
         for a in range(0,d):
             M2 = moments[nodeID][a][1]
             M4 = moments[nodeID][a][3]
@@ -173,7 +173,7 @@ cdef void insert(float[:,:] data, float[:,:,:] moments, Split split_info, int H,
                 new_kurtosis_vals[a] = (moments[nodeID][a][4] * M4) / M2 * M2
                 new_kurtosis_vals[a] = log(new_kurtosis_vals[a] + 1)
             new_kurtosis_sum += new_kurtosis_vals[a]
-        
+        '''
         # analyze kurtosis for rebuild
         # TODO
         
@@ -203,14 +203,10 @@ cdef void insert(float[:,:] data, float[:,:,:] moments, Split split_info, int H,
     
 
 
-cdef void kurtosis_sum_ids(float[:,:] data, float[:,:] moments, int i):
+cdef float kurtosis_sum_ids(float[:,:] data, float[:,:] moments, int i):
     cdef Py_ssize_t d = data.shape[1]
     cdef int a
-    cdef float[:] moments_res
-    cdef float ks = 0
-    
-    cdef float mean, M2, M3, M4, n, delta, delta_n, delta_n2, term1, n1, kurtosis, x
-    
+    cdef float mean, M2, M3, M4, n, delta, delta_n, delta_n2, term1, n1, x, kurtosis_sum = 0, kurtosis
     for a in range(0, d): 
         mean = moments[a][0]
         M2 = moments[a][1]
@@ -229,11 +225,22 @@ cdef void kurtosis_sum_ids(float[:,:] data, float[:,:] moments, int i):
         M4 = M4 + term1 * delta_n2 * (n*n - 3*n + 3) + 6 * delta_n2 * M2 - 4 * delta_n * M3
         M3 = M3 + term1 * delta_n * (n - 2) - 3 * delta_n * M2
         M2 = M2 + term1
+
+        if M4 == 0:
+            kurtosis = 0
+        else:
+            kurtosis = (n * M4) / (M2 * M2)
+            kurtosis = log(kurtosis + 1)
+            kurtosis_sum += kurtosis
+         
         
         moments[a][0] = mean
         moments[a][1] = M2
         moments[a][2] = M3
         moments[a][3] = M4
         moments[a][4] = n
+        moments[a][5] = kurtosis
+        
+        return kurtosis_sum
               
        
