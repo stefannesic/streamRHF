@@ -95,9 +95,6 @@ cpdef rhf_stream(float[:,::1] data, int t, int h, int N_init_pts):
            
     return insertionDS
 
-
-from my_imports import np, ga, random, time, ks_cy, split, leaves
-
 cdef void rht_stream(float[:,::1] data, int[:,:] indexes, Leaves insertionDS, Split split_info, float[:,:, :] moments, float[:] kurtosis_arr, int H, int N_init_pts, int t_id):
     cdef int i, N = data.shape[0]
     # simulating real-time (except trees constructed one by one) 

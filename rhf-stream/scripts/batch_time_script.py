@@ -30,12 +30,8 @@ data = data.copy(order='C')
 for i in range(0,10):
     t0 = time.time()
     insertionDS = rhfs.rhf(data, T, H)
-    #scores = a_s.anomaly_score(indexes, T)
     scores = rhfs.anomaly_score_ids(insertionDS, T, N)
     AP = average_precision_score(labels, scores)
-
     t1 = time.time()
-    #print(np.asarray(split_info[i].kurtosis_vals[0]))
-    #print(split_info[i].kurtosis_sum[0])
     print("Total time for rhf-cython (train) = ", t1-t0)
     print("AP=", AP)
