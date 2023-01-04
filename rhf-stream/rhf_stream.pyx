@@ -190,7 +190,7 @@ cpdef rhf_stream(float[:,::1] data, int t, int h, int N_init_pts):
                 leaf_indexes[j] = insert(data, moments[j], splits, h, insertionDS, kurtosis_arr, new_indexes, i, j, r_values[j])
             
             # score point inserted in forest
-            scores[i] = anomaly_score_ids_incr(leaf_indexes, insertionDS, t, i)
+            scores[i] = anomaly_score_ids_incr(leaf_indexes, insertionDS, t, N_init_pts + ((i + 1) % N_init_pts))
             
     t1 = timeit.default_timer()
 
