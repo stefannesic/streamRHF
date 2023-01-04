@@ -8,7 +8,7 @@ cpdef rhf(float[:,:] data, int t, int h):
     # 2 = (index in X, number of elems in leaf)
     indexes = np.empty([t, n, 2], dtype=np.intc)
     # moments = trees * nodes * attributes * card({M1, M2, M3, M4, n})
-    moments = np.zeros([t, (2**h)-1, d, 5], dtype=np.float32)
+    moments = np.zeros([t, (2**h)-1, d, 6], dtype=np.float32)
     splits = np.empty([t], dtype=object)
     # create secondary data structure for insertion algorithm
     insertionDS = np.empty([t], dtype=object)
