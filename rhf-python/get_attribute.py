@@ -6,15 +6,17 @@ def get_attribute(X):
     ks = ks_cy.kurtosis_sum(X, X.shape[1]-1)
     # ks may not be included depending on rounding
     r = random.uniform(0, ks)
-        
-    for a in range(0, X.shape[1]):
+    end = X.shape[1]
+    for a in range(0,end):
         if ks_cy.kurtosis_sum(X, a) > r:
             a_col = X[:, a]
-                        
             # ensures that the split will be proper (no split on extremes)
-            a_val = np.amin(a_col)
-
-            while a_val == np.amin(a_col) or a_val == np.max(a_col):
-                a_val = random.uniform(np.amin(a_col), np.amax(a_col))
-
+            a_min = np.amin(a_col)
+            a_max = np.amax(a_col)
+            a_val = a_min
+           
+            while a_val == a_min or a_val == a_max:
+                    a_val = random.uniform(a_min, a_max)
+                    
             return a, a_col, a_val
+

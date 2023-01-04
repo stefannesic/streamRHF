@@ -5,7 +5,7 @@ def kurtosis_sum(X, d):
     
     # loop over the transpose matrix in order to analyze by column
     for a in range(0, d+1):
-        # + 4 since the scipy function for kurtosis subtracts 3 so +1 +3 = 4
-        sum += np.log(sstats.stats.kurtosis(X[:,a])+4)
+        if (np.min(X[:,a]) != np.max(X[:,a])):
+            sum += np.log(sstats.stats.kurtosis(X[:,a], fisher=False)+1)
         
     return sum
