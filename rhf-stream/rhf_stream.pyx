@@ -1,25 +1,17 @@
-from my_imports import np, Node, ins, rht
+from my_imports import np, rht, Node, rhts
 
-def rhf_stream(data, n, t, h, eps):
-    N = 100
-    T = t
-    H = h
-    
-    Node.Node.H = H
+# construction of a random histogram forest
+cpdef rhf_stream(X, int t, int h, int n, float eps):
+    # set max tree height
+    Node.H = h
+    print("rhfs, Node.H=", Node.H)
     rht.eps = eps
-    base = np.empty([N])
+    # create an empty forest
+    rhf = np.empty([t], dtype=object)
 
+    # append t random histogram trees
+    for i in range(t):
+        print("i=", i)
+        rhf[i] = rhts.rht_stream(X, n)
 
-
-    # simulating real-time 
-    # construct initial tree with batch algorithm on the first N points
-    for i in range(0, N):
-        base[i] = data[i]
-
-    tree = rht.rht(base, t=T)
-
-    # update existing tree
-    for i in range(N, data.shape[0]):
-        tree = ins.insert(tree, np.array([data[i]], np.float32))
-
-    return tree
+    return rhf

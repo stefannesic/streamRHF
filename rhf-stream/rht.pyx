@@ -6,10 +6,10 @@ cdef float eps = 0.001
 def rht(X, int nd):
     cdef float r, ks, a_val
     cdef int a
-    # unique instances
-    X_unique = np.unique(np.asarray(X), axis=0)
     # last condition checks if all instances are the same --> Leaf
-    if nd >= Node.H or X_unique.shape[0] == 1:
+    if nd >= Node.H or np.all(X[0] == X):
+        # unique instances
+        X_unique = np.unique(np.asarray(X), axis=0)
         # returns instances without duplicates
         return Node.Node(nd=nd, data=X_unique)
     else:
