@@ -171,11 +171,27 @@ cpdef rhf_stream(float[:,::1] data, int t, int h, int N_init_pts):
 
     # insert and score remaining instances one by one 
     for i in range(N_init_pts, n):
-        for j in range(t):
-            leaf_indexes[j] = insert(data, moments[j], splits, h, insertionDS, kurtosis_arr, new_indexes, i, j, r_values[j])
-        # score point inserted in forest
-        scores[i] = anomaly_score_ids_incr(leaf_indexes, insertionDS, t, i)
-        
+        # last instance in window so reset model 
+        if ((i+1) % N_init_pts == 0):
+            # reset data structures
+            insertionDS = Leaves(t, h, W_MAX)
+            splits = Split(t, h, d)
+            moments = np.zeros([t, (2**h)-1, d, 6], dtype=np.float32)
+            # initialize forest based on the now filled "current window"
+            for j in range(t):
+                # intialize dataset.index
+                index_range = np.arange(i-N_init_pts+1, i+1, dtype=np.intc)
+                indexes[j] = index_range
+                rht(data, indexes[j], insertionDS, splits, moments[j], kurtosis_arr, start=0, 
+                    end=N_init_pts-1, nd=0, H=h, d=d, nodeID=0, t_id=j, r_values=r_values[j]) 
+        else:
+            # insert and score points in current window based on reference+current
+            for j in range(t):
+                leaf_indexes[j] = insert(data, moments[j], splits, h, insertionDS, kurtosis_arr, new_indexes, i, j, r_values[j])
+            
+            # score point inserted in forest
+            scores[i] = anomaly_score_ids_incr(leaf_indexes, insertionDS, t, i)
+            
     t1 = timeit.default_timer()
 
     print("Total time for insertions=", t1 - t0)
