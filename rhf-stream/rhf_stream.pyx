@@ -198,7 +198,7 @@ cpdef rhf_stream(double[:,::1] data, int t, int h, int N_init_pts):
     return scores
 
 # sort indexes according to split
-cdef int sort(double[:,::1] data, int[:] indexes, int start, int end, Py_ssize_t a, float a_val):
+cdef int sort(double[:,::1] data, int[:] indexes, int start, int end, Py_ssize_t a, double a_val):
     cdef int temp
     cdef Py_ssize_t i, j
     # quicksort Hoare partition scheme
@@ -269,7 +269,7 @@ cdef int rht(double[:,::1] data, int[:] indexes, Leaves insertionDS, Split split
               
     return insertion_leaf
 
-cdef (int, float, float) get_attribute(double[:,::1] data, int[:] indexes, Py_ssize_t start, Py_ssize_t end, float ks, double[:] kurt, int d, float r=-1):
+cdef (int, double, double) get_attribute(double[:,::1] data, int[:] indexes, Py_ssize_t start, Py_ssize_t end, double ks, double[:] kurt, int d, double r=-1):
     cdef Py_ssize_t i, a = -1, data_index
     cdef double a_val, a_min, a_max, temp, cumul = 0
    
