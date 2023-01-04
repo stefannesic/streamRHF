@@ -78,7 +78,6 @@ cpdef rhf_windowed(float[:,::1] data, int t, int h, int N_init_pts):
         # score point inserted in forest
         for j in range(t):
              leaf_indexes[j] = find_leaf(data, splits, h, i, t_id=j)
-
         scores[i] = anomaly_score_ids_incr(leaf_indexes, insertionDS, t, N_init_pts)
         # rebuild model every N_init_pts 
         if (i + 1) % N_init_pts == 0 and i != n - 1:
@@ -166,7 +165,6 @@ cpdef rhf_stream(float[:,::1] data, int t, int h, int N_init_pts):
     print("Forest initialized...") 
     # score the intial points
     scores[:N_init_pts] = anomaly_score_ids(insertionDS, t, N_init_pts) 
-    #print("scores after init=", np.asarray(scores))
     print("Initial forest scored.")
     # insert each instance in all of the trees
     t0 = timeit.default_timer()
@@ -222,16 +220,18 @@ cdef int rht(float[:,::1] data, int[:] indexes, Leaves insertionDS, Split split_
                 r = -1
 
             a, a_val, r = get_attribute(data, indexes, start, end, ks, kurtosis_arr, d, r)
+            
             # if different r is chosen, update
             # otherwise, nothing will change
-            r_values[nodeID] = r
+            if r_values != None: 
+                r_values[nodeID] = r
+            
             # sort indexes
             split = sort(data, indexes, start, end, a, a_val)
             # store split info
             split_info.splits[t_id][nodeID] = split
             split_info.attributes[t_id][nodeID] = a
             split_info.values[t_id][nodeID] = a_val
-
             # check on which side insertion point ended up 
             # return the result of that side 
             if insertion_pt != None: 
@@ -296,7 +296,6 @@ cdef (int, float, float) get_attribute(float[:,::1] data, int[:] indexes, Py_ssi
         # if you reached this point r is not good, choose another
         r = random.uniform(0, ks)
       
- 
     a_val = random.uniform(a_min, a_max)
     
     while a_val == a_min or a_val == a_max:
@@ -481,6 +480,8 @@ cdef int insert(float[:,::1] data, float[:,:,:] moments, Split split_info, int H
                           start=0, end=counter, nd=nd, H=H, d=d, nodeID=nodeID, t_id=t_id,  r_values=r_values, insertion_pt=data[i])
         
         return leaf_index
+
+
 
 # find leaf
 cdef int find_leaf(float[:,::1] data, Split split_info, int H, Py_ssize_t i, int t_id):
