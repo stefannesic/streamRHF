@@ -102,7 +102,6 @@ cdef void rht_stream(float[:,::1] data, int[:,:] indexes, Leaves insertionDS, Sp
     # construct initial tree with batch algorithm on the first N points
     cdef int d = data.shape[1]
     rht(data, indexes, insertionDS, split_info, moments, kurtosis_arr, start=0, end=N_init_pts-1, nd=0, H=H, d=d, nodeID=0, t_id=t_id) 
-    np.set_printoptions(threshold=np.inf)
     #print("before insertion_ds=", np.asarray(insertionDS.table[t_id]))
     #print("splits.attributes=", np.asarray(split_info.attributes[t_id]))
     #print("splits.values=", np.asarray(split_info.values[t_id]))
