@@ -6,7 +6,7 @@ build/
 *.swo
 *.so
 */__pycache__/
-*/cython_debug/
+cython_debug/
 *.swp
 datasets
 */notebooks/*
