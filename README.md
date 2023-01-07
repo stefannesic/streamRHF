@@ -37,10 +37,6 @@ Show users how to use the software.
 Be specific.
 Use appropriate formatting when showing code snippets.
 
-## Known issues
-
-Document any known significant shortcomings with the software.
-
 ## Getting help
 
 Contact the author at stefan \<dot\> nesic \<at\> protonmail \<dot\> com.
