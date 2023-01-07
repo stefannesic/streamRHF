@@ -1,7 +1,7 @@
 # streamRHF: Tree-Based Unsupervised Anomaly Detection for Data Streams
 
 **Description**:  
-This is the code related to the [steamRHF paper](https://nonsns.github.io/paper/rossi22aiccsa.pdf).
+This is the code related to the [streamRHF paper](https://nonsns.github.io/paper/rossi22aiccsa.pdf), which was a collaboration between Télécom Paris, Huawei Technologies France, and Inria Paris.
 
 streamRHF is an unsupervised anomaly detection algorithm for data streams. Our algorithm builds on
 some of the ideas of [Random Histogram Forest (RHF)](https://nonsns.github.io/paper/rossi20icdm.pdf), a state-
