@@ -1,4 +1,5 @@
-# streamRHF: Tree-Based Unsupervised Anomaly Detection for Data Streams
+# streamRHF
+### Tree-Based Unsupervised Anomaly Detection for Data Streams
 
 **Description**:  
 This is the code related to the [streamRHF paper](https://nonsns.github.io/paper/rossi22aiccsa.pdf), which was a collaboration between Télécom Paris, Huawei Technologies France, and Inria Paris.
