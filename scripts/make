@@ -1,2 +1,0 @@
-python3 ../src/setup.py build_ext --inplace
- 

@@ -43,12 +43,11 @@ Document any known significant shortcomings with the software.
 
 ## Getting help
 
-Contact the author at stefan <dot> nesic <at> protonmail <dot> com.
+Contact the author at stefan \<dot\> nesic \<at\> protonmail \<dot\> com.
 
 ## Open source licensing info
-1. [TERMS](TERMS.md)
-2. [LICENSE](LICENSE)
-3. [CFPB Source Code Policy](https://github.com/cfpb/source-code-policy/)
+
+1. [LICENSE](LICENSE)
 
 ## Credits and references
 
