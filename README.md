@@ -15,7 +15,7 @@ limited computational complexity.
 Other things to include:
 
   - **Technology stack**: Cython
-  - **Status**:  The code was completed for the publication and has not been updated since. 
+  - **Status**:  The code was completed for the publication and is no longer updated.
 
 ## Dependencies
 
@@ -24,18 +24,14 @@ Install all dependencies as follows:
 
 ## Installation
 
-Detailed instructions on how to install, configure, and get the project running.
-This should be frequently tested to ensure reliability. 
+If you attempted to previously install the module, you may use `make clean` to clear all build and cache files. 
 
-## Configuration
-
-If the software is configurable, describe it in detail, either here or in other documentation to which you link.
+1. Build the streamRHF module: `make`
+2. Install the module to your local user: `make install`
 
 ## Usage
 
-Show users how to use the software.
-Be specific.
-Use appropriate formatting when showing code snippets.
+An example script found in `scripts/insertion_script.py` is provided that details how the streamRHF module was used in the experiments detailed in the paper.
 
 ## Getting help
 

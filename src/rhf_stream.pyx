@@ -1,4 +1,5 @@
-from my_imports import np, random
+import numpy as np
+import random
 import timeit, sys
 from libc.math cimport log, fabs
 cdef class Split:
@@ -21,79 +22,6 @@ cdef class Leaves:
         # all set to -1
         self.table = np.zeros([t,2**H, W_MAX], dtype=np.intc) - 1
 
-# construction of a random histogram forest
-cpdef rhf(double[:,::1] data, int t, int h):
-    cdef int n = data.shape[0], d = data.shape[1]
-    cdef int W_MAX = n
-    cdef int[:] temp
-    cdef Py_ssize_t i 
-    # create an empty forest of t trees each with n x 3 
-    # 2 = (index in X, number of elems in leaf)
-    cdef int[:,:] indexes = np.empty([t, n], dtype=np.intc)
-    # moments = trees * nodes * attributes * card({M1, M2, M3, M4, n})
-    cdef double[:,:,:,:] moments = np.zeros([t, (2**h)-1, d, 6], dtype=np.float64)
-    cdef Split splits = Split(t, h, d)
-    # create secondary data structure for insertion algorithm
-    cdef Leaves insertionDS = Leaves(t, h, W_MAX)
-    cdef double[:] kurtosis_arr = np.empty([d], np.float64)
-    # calculate t trees in global index variable
-    for i in range(t):
-        # intialize dataset.index
-        temp = np.arange(0,n, dtype=np.intc)
-        indexes[i] = temp
-        rht(data=data, indexes=indexes[i], insertionDS=insertionDS, split_info=splits, moments=moments[i], kurtosis_arr=kurtosis_arr, start=0, end=n-1, nd=0, H=h, d=d, nodeID=0, t_id=i) 
-    return anomaly_score_ids(insertionDS, t, n)
-
-cpdef rhf_windowed(double[:,::1] data, int t, int h, int N_init_pts):
-    cdef int n = data.shape[0], d = data.shape[1]
-    cdef int W_MAX = n
-    cdef int[:] index_range, leaf_indexes = np.empty([t], dtype=np.intc)
-    cdef Py_ssize_t i, j  
-    cdef double[:] scores = np.empty([n], dtype=np.float64)
-    # create an empty forest of t trees each with N_init_pts x 3 
-    # 2 = (index in X, number of elems in leaf)
-    cdef int[:,:] indexes = np.empty([t, N_init_pts], dtype=np.intc)
-    # moments = trees * nodes * attributes * card({M1, M2, M3, M4, n})
-    cdef double[:,:,:,:] moments = np.zeros([t, (2**h)-1, d, 6], dtype=np.float64)
-    cdef Split splits = Split(t, h, d)
-    # create secondary data structure for insertion algorithm
-    cdef Leaves insertionDS = Leaves(t, h, W_MAX)
-    cdef double[:] kurtosis_arr = np.empty([d], np.float64)
-    
-    # initalize forest
-    for i in range(t):
-        # intialize dataset.index
-        index_range = np.arange(0, N_init_pts, dtype=np.intc)
-        indexes[i] = index_range
-        rht(data, indexes[i], insertionDS, splits, moments[i], kurtosis_arr, start=0, end=N_init_pts-1, nd=0, H=h, d=d, nodeID=0, t_id=i) 
-    
-    print("Forest initialized... size="+str(N_init_pts)) 
-    # score the intial points
-    scores[:N_init_pts] = anomaly_score_ids(insertionDS, t, N_init_pts) 
-    print("Initial forest scored.")
-   
-    # score remaining instances one by one 
-    t0 = timeit.default_timer()
-    for i in range(N_init_pts, n):
-        # score point inserted in forest
-        for j in range(t):
-             leaf_indexes[j] = find_leaf(data, splits, h, i, t_id=j)
-        scores[i] = anomaly_score_ids_incr(leaf_indexes, insertionDS, t, N_init_pts)
-        # rebuild model every N_init_pts 
-        if (i + 1) % N_init_pts == 0 and i != n - 1:
-            insertionDS = Leaves(t, h, W_MAX)
-            splits = Split(t, h, d)
-            for j in range(t):
-                index_range = np.arange(i-N_init_pts+1, i+1, dtype=np.intc)
-                indexes[j] = index_range
-                rht(data, indexes[j], insertionDS, splits, moments[j], kurtosis_arr, start=0, end=N_init_pts-1, nd=0, H=h, d=d, nodeID=0, t_id=j) 
-        
-    t1 = timeit.default_timer()
-
-    print("Total time for insertions=", t1 - t0)
-          
-    return scores
- 
 # anomaly score for insertion data structure)
 cdef double[:] anomaly_score_ids(Leaves insertionDS, Py_ssize_t t, int n):
     cdef double score
@@ -503,46 +431,6 @@ cdef int insert(double[:,::1] data, double[:,:,:] moments, Split split_info, int
         return leaf_index
 
 
-
-# find leaf
-cdef int find_leaf(double[:,::1] data, Split split_info, int H, Py_ssize_t i, int t_id):
-    # analyze non leaf node until x is inserted
-    # if a non leaf node kurtosis changes, recalculate split
-    # start at root node
-    cdef Py_ssize_t nodeID = 0, split_a, leaf_index
-    cdef int a, nd = 0
-    cdef double split_a_val
-    cdef int[:] split_attributes = split_info.attributes[t_id]
-    cdef double[:] split_vals = split_info.values[t_id]
-    cdef int[:] split_splits = split_info.splits[t_id]
-    
-    # while leaf node isn't reached
-    
-    while nodeID < (2**H)-1 and split_splits[nodeID] != 0:      
-        split_a = split_attributes[nodeID]
-        split_a_val = split_vals[nodeID]
-            
-        if data[i][split_a] <= split_a_val:
-            nodeID = nodeID*2 + 1
-        else:
-            nodeID = nodeID*2 + 2
-
-        # increase node depth
-        nd += 1
-    
-    # calculate index for insertionDS
-    if nodeID >= (2**H - 1) : # leaf is at max depth
-        leaf_index = nodeID
-        # at this point, leaf_index is a leaf nodeID and needs to be adjusted for indexing in insertionDS
-        leaf_index = leaf_index - ((2**H) - 1)
-         
-    else:
-        # not a max depth so extend depth
-        leaf_index = (2**(H - nd))*(nodeID + 1) - 1
-        # at this point, leaf_index is a leaf nodeID and needs to be adjusted for indexing in insertionDS
-        leaf_index = leaf_index - ((2**H) - 1)
-        
-    return leaf_index
 
 cdef double kurtosis_sum_ids(double[:,::1] data, double[:,:] moments, double[::1] kurtosis_arr, Py_ssize_t i):
     cdef Py_ssize_t d = data.shape[1], a

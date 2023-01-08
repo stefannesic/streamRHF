@@ -12,3 +12,6 @@ datasets
 */notebooks/*
 *.ipynb
 *.ini
+__init__.py
+dist/
+UNKNOWN.egg-info/
