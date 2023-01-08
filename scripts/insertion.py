@@ -6,7 +6,7 @@ import rhf_stream as rhfs
 import utils
 
 if len(sys.argv) < 8:
-    print("Command: python3 insertion_script.py [dataset] [T] [H] [iterations] [initsamplepercent] [shuffled?] [constant?]")
+    print("Command: python3 insertion.py [dataset] [T] [H] [iterations] [initsample] [shuffled?] [constant?]")
     quit()
 
 # Get path to datasets
