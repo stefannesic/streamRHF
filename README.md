@@ -42,7 +42,8 @@ An example script found in `scripts/insertion.py` is provided that details how t
 dataset_path=your_path_to_datasets
 ```
 
-3. Test streamRHF on a batch or time series dataset: `python3 insertion.py [dataset] [T] [H] [iterations] [initsample] [shuffled?] [constant?]`
+3. Test streamRHF on a batch or time series dataset: \\
+`python3 insertion.py [dataset] [T] [H] [iterations] [initsample] [shuffled?] [constant?]`
 * **dataset**: the name of the file containing your data
 * **T**: the number of trees
 * **H**: the height
@@ -51,10 +52,8 @@ dataset_path=your_path_to_datasets
 * **shuffled**: set to 1 if you want to shuffle the dataset, otherwise 0
 * **constant**: set to 1 if the initial sample is expressed as a constant, otherwise it is a percentage of the dataset size
 
-Example on a dataset named "cardio" with 100 trees of height 5 running on 10 iterations and an initial sample size of 5 percent:
+Example on a shuffled dataset named "cardio" with 100 trees of height 5 running on 10 iterations and an initial sample size of 5 percent: \\
 `python3 insertion.py cardio 100 5 10 5 1 0`
-
-
 
 ## Getting help
 
